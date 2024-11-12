@@ -4,70 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malik FASSI FIHRI - Culinary Arts Candidate</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        @font-face {
-            font-family: 'Garet';
-            src: url('path-to-garet-font/Garet-Book.woff2') format('woff2'),
-                 url('path-to-garet-font/Garet-Book.woff') format('woff');
-            font-weight: normal;
-            font-style: normal;
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #ecf0f1;
             --accent-color: #3498db;
         }
-        @font-face {
-            font-family: 'Clear Sans';
-            src: url('path-to-clear-sans-font/ClearSans-Regular.woff2') format('woff2'),
-                 url('path-to-clear-sans-font/ClearSans-Regular.woff') format('woff');
-            font-weight: normal;
-            font-style: normal;
-        }
         body {
-            font-family: 'Clear Sans', Arial, sans-serif;
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f0f0f0;
             background-color: var(--secondary-color);
             color: var(--primary-color);
             line-height: 1.6;
         }
         .container {
-            display: flex;
-            max-width: 900px;
-            margin: 20px auto;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             max-width: 1000px;
             margin: 0 auto;
             padding: 40px 20px;
         }
-        .left-column {
-            flex: 1;
-            padding: 20px;
-            background-color: white;
         header {
             text-align: center;
             margin-bottom: 40px;
         }
-        .right-column {
-            flex: 2;
-            padding: 20px;
-            background-color: #e6f3ff;
-        }
         .profile-img {
-            width: 100%;
-            border-radius: 5px;
             width: 150px;
             height: 150px;
             border-radius: 50%;
             object-fit: cover;
             margin-bottom: 20px;
         }
-        h1, h2 {
         h1, h2, h3 {
             font-family: 'Tenor Sans', sans-serif;
             margin-top: 0;
@@ -83,7 +50,6 @@
             padding-bottom: 10px;
         }
         h3 {
-            font-family: 'Garet', sans-serif;
             font-size: 1.3em;
             margin-bottom: 5px;
         }
@@ -93,10 +59,8 @@
             margin-bottom: 20px;
         }
         .email-btn {
-            font-family: 'Garet', sans-serif;
             display: inline-block;
             padding: 10px 20px;
-            background-color: #333;
             background-color: var(--accent-color);
             color: white;
             text-decoration: none;
@@ -110,9 +74,7 @@
             margin-top: 20px;
         }
         .interests span {
-            font-family: 'Garet', sans-serif;
             display: inline-block;
-            background-color: #e0e0e0;
             background-color: var(--primary-color);
             color: var(--secondary-color);
             padding: 5px 10px;
@@ -135,73 +97,53 @@
 </head>
 <body>
     <div class="container">
-        <div class="left-column">
-            <img src="profile.jpeg" alt="Malik FASSI FIHRI" class="profile-img">
-            <img src="profile.jpeg" alt="Malik FASSI FIHRI" class="profile-img">
         <header>
-            <img src="profile.jpg" alt="Malik FASSI FIHRI" class="profile-img">
-            <p>Culinary Arts Candidate – CAP Cuisine</p>
-            <p>Culinary Arts Candidate – CAP Cuisine</p>
+            <img src="profile.jpeg" alt="Malik FASSI FIHRI" class="profile-img">
+            <h1>Malik FASSI FIHRI</h1>
             <p class="subtitle">Culinary Arts Candidate – CAP Cuisine</p>
-            <div class="interests">
-            <div class="interests">
-                <h3>Interests</h3>
-                <span>Sustainable Cuisine</span>
-                <span>Fermentation Techniques</span>
-                <span>Culinary Innovation</span>
-                <span>Outdoor Sports</span>
-            </div>
-        </div>
-        <div class="right-column">
+            <a href="mailto:malikfassifihri@gmail.com" class="email-btn">EMAIL ME</a>
         </header>
 
         <section class="section">
+            <h2>About Me</h2>
             <p>Aspiring chef with a background in software engineering, currently completing a CAP Cuisine at École La Source in Paris with a focus on vegetarian cuisine and fermentation. Experienced in high-volume meal preparation, serving 50+ pax daily during practical training, and passionate about sustainable, innovative culinary practices.</p>
-            
-            
         </section>
 
         <section class="section">
+            <h2>Education</h2>
             <h3>CAP Cuisine – Specialization in Vegetarian & Fermentation</h3>
-            <p>École La Source, Paris • Sept 2024 – Dec 2024</p>
-            <p>École La Source, Paris • Sept 2024 – Dec 2024</p>
             <p class="date">École La Source, Paris • Sept 2024 – Dec 2024</p>
+            <ul>
                 <li>Courses in Culinary Techniques: Preparation of stocks, sauces, and broths; working with fresh pasta, eggs, and legumes; cutting and cooking techniques for meats, poultry, and seafood; exploration of grains and legumes.</li>
                 <li>Fermentation Courses: Mastery of sourdough, lacto-fermented vegetables, kimchi, dairy ferments, and fermented beverages.</li>
                 <li>Patisserie Courses: Skills in pastries such as brioche, tarts, choux, and cream-based desserts.</li>
                 <li>Practical Restaurant Training: Weekly hands-on experience creating menus under chef supervision, preparing lunch for 50+ pax daily, with a focus on anti-waste initiatives developed by students.</li>
             </ul>
-
         </section>
-            <h2>Professional Experience</h2>
+
         <section class="section">
+            <h2>Professional Experience</h2>
             <h3>Technical Lead | Senior Software Engineer</h3>
-            <p>Ledger • 2017 – 2024</p>
-            <p>Ledger • 2017 – 2024</p>
             <p class="date">Ledger • 2017 – 2024</p>
+            <ul>
                 <li>Led a team of 80 engineers in developing secure, high-quality software solutions, focusing on user-centered design and robust development practices.</li>
                 <li>Played a key role in recruitment, conducting over 150 interviews, and representing the company at tech conventions.</li>
                 <li>Guided technical projects from design to production, including ongoing support and troubleshooting for long-term reliability.</li>
             </ul>
 
             <h3>Fullstack Developer Intern</h3>
-            <p>Louis Vuitton • 2017</p>
-            <p>Louis Vuitton • 2017</p>
             <p class="date">Louis Vuitton • 2017</p>
+            <ul>
                 <li>Developed responsive dashboards for the communication team and managed data extraction and API integration.</li>
             </ul>
-
         </section>
-            <h2>Additional Education</h2>
+
         <section class="section">
+            <h2>Additional Education</h2>
             <h3>Degree in Computer Science</h3>
-            <p>42 School, Paris • 2013 – 2017</p>
-            <p>42 School, Paris • 2013 – 2017</p>
             <p class="date">42 School, Paris • 2013 – 2017</p>
+
             <h3>Degree in Civil Engineering & Computer Science</h3>
-            <p>Université libre de Bruxelles • 2011 – 2013</p>
-            <p>Université libre de Bruxelles • 2011 – 2013</p>
-        </div>
             <p class="date">Université libre de Bruxelles • 2011 – 2013</p>
         </section>
 
@@ -214,5 +156,6 @@
                 <span>Outdoor Sports</span>
             </div>
         </section>
+    </div>
 </body>
 </html>
