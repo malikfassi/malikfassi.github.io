@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .left-column {
+            flex: 1;
+            padding: 20px;
+            background-color: white;
+        }
+        .right-column {
+            flex: 2;
+            padding: 20px;
+            background-color: #e6f3ff;
+        }
+        .profile-img {
+            width: 100%;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            margin-top: 0;
+        }
+        .email-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-column">
+            <img src="profile-image.jpg" alt="Profile Picture" class="profile-img">
+            <h1>Your Name</h1>
+            <p>Your Title</p>
+            <a href="mailto:your.email@example.com" class="email-btn">EMAIL ME</a>
+        </div>
+        <div class="right-column">
+            <h2>About Me</h2>
+            <p>Your personal description goes here. Highlight your key skills and experiences.</p>
+            
+            <h2>Experience</h2>
+            <h3>Job Title</h3>
+            <p>Company Name • Date Range</p>
+            <ul>
+                <li>Key responsibility or achievement</li>
+                <li>Another key point</li>
+            </ul>
+            
+            <!-- Add more experience entries as needed -->
+        </div>
+    </div>
+</body>
+</html>
