@@ -99,10 +99,19 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.save();
         ctx.imageSmoothingEnabled = false;
         
-        const frame = getFlowerFrame(flower);
-        if (!frame) return; // Skip drawing if no frame
-        
-        // Apply wind sway if not a seed
+        // Draw stalk first
+        if (state !== 'seed') {
+            const stalkHeight = GARDEN_CONFIG.STEM_LENGTH * scale;
+            ctx.fillStyle = GARDEN_CONFIG.COLORS.STEM;
+            ctx.fillRect(
+                Math.floor(x - scale/2),
+                Math.floor(y),
+                scale,
+                stalkHeight
+            );
+        }
+
+        // Draw flower head with wind sway
         if (state !== 'seed') {
             const sway = calculateWindSway(x, y, time);
             ctx.translate(Math.floor(x + sway.x * scale), Math.floor(y + sway.y * scale));
@@ -111,6 +120,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const growthProgress = Math.min(1, age / GARDEN_CONFIG.FLOWER_STAGES.BLOOMING);
+        
+        const frame = getFlowerFrame(flower);
+        if (!frame) return; // Skip drawing if no frame
         
         frame.forEach((row, i) => {
             if (i <= frame.length * growthProgress) {
@@ -287,19 +299,15 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Wind particles initialized');
 
     function spawnButterfly() {
-        // Safety check for butterflies array
-        if (!Array.isArray(butterflies)) {
-            butterflies = [];
-        }
-
-        if (butterflies.length >= GARDEN_CONFIG.MAX_BUTTERFLIES) {
+        if (butterflies.length >= GARDEN_CONFIG.BUTTERFLY_MAX_COUNT) {
             scheduleNextSpawn();
             return;
         }
 
+        // Spawn from random edge
         const edge = ['top', 'right', 'bottom', 'left'][Math.floor(Math.random() * 4)];
         let x, y, angle;
-
+        
         switch(edge) {
             case 'top':
                 x = Math.random() * gardenCanvas.width;
@@ -330,6 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
             angle,
             state: GARDEN_CONFIG.BUTTERFLY_STATES.SPAWNING,
             birthTime: Date.now(),
+            scaredTime: 0,
             velocity: {
                 x: Math.cos(angle) * GARDEN_CONFIG.PEACEFUL_SPEED,
                 y: Math.sin(angle) * GARDEN_CONFIG.PEACEFUL_SPEED
@@ -351,40 +360,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateButterfly(butterfly, mouseX, mouseY) {
-        const age = Date.now() - butterfly.birthTime;
-        
-        // Check if butterfly should leave
-        if (age > GARDEN_CONFIG.BUTTERFLY_LIFESPAN) {
-            butterfly.state = GARDEN_CONFIG.BUTTERFLY_STATES.LEAVING;
-        }
-
-        // Handle scared state
+        const time = Date.now();
         const distToMouse = Math.hypot(butterfly.x - mouseX, butterfly.y - mouseY);
-        if (distToMouse < GARDEN_CONFIG.FEAR_RADIUS && 
-            butterfly.state !== GARDEN_CONFIG.BUTTERFLY_STATES.LEAVING) {
-            butterfly.state = GARDEN_CONFIG.BUTTERFLY_STATES.SCARED;
+
+        // Enhanced fear response
+        if (distToMouse < GARDEN_CONFIG.FEAR_RADIUS * 2) { // Doubled detection radius
+            butterfly.state = 'scared';
+            butterfly.scaredTime = time;
+            
+            // Strong initial escape vector
             const escapeAngle = Math.atan2(butterfly.y - mouseY, butterfly.x - mouseX);
-            butterfly.velocity.x = Math.cos(escapeAngle) * GARDEN_CONFIG.ESCAPE_SPEED;
-            butterfly.velocity.y = Math.sin(escapeAngle) * GARDEN_CONFIG.ESCAPE_SPEED;
-        } else if (butterfly.state === GARDEN_CONFIG.BUTTERFLY_STATES.SCARED) {
-            butterfly.state = GARDEN_CONFIG.BUTTERFLY_STATES.FLYING;
+            butterfly.velocity.x = Math.cos(escapeAngle) * GARDEN_CONFIG.ESCAPE_SPEED * 2;
+            butterfly.velocity.y = Math.sin(escapeAngle) * GARDEN_CONFIG.ESCAPE_SPEED * 2;
+            
+            // Add vertical escape component
+            butterfly.velocity.y -= GARDEN_CONFIG.ESCAPE_SPEED;
         }
 
-        // Update position based on state
-        switch (butterfly.state) {
-            case GARDEN_CONFIG.BUTTERFLY_STATES.LEAVING:
-                handleButterflyLeaving(butterfly);
-                break;
-            case GARDEN_CONFIG.BUTTERFLY_STATES.FLYING:
-                handleButterflyFlying(butterfly);
-                break;
-            case GARDEN_CONFIG.BUTTERFLY_STATES.SITTING:
-                handleButterflySitting(butterfly);
-                break;
-            case GARDEN_CONFIG.BUTTERFLY_STATES.SPAWNING:
-                handleButterflySpawning(butterfly);
-                break;
+        // Natural movement when approaching flowers
+        if (butterfly.targetFlower && butterfly.state !== 'scared') {
+            const dx = butterfly.targetFlower.x - butterfly.x;
+            const dy = butterfly.targetFlower.y - butterfly.y;
+            const distToFlower = Math.hypot(dx, dy);
+            
+            if (distToFlower > 5) {
+                // Sinusoidal approach path
+                const approach = Math.atan2(dy, dx);
+                const time = Date.now() / 1000;
+                
+                // Vertical oscillation
+                const verticalOsc = Math.sin(time * 3) * 0.5;
+                // Horizontal oscillation
+                const horizontalOsc = Math.cos(time * 2) * 0.3;
+                
+                butterfly.velocity.x = (Math.cos(approach + horizontalOsc) * GARDEN_CONFIG.PEACEFUL_SPEED);
+                butterfly.velocity.y = (Math.sin(approach + verticalOsc) * GARDEN_CONFIG.PEACEFUL_SPEED);
+                
+                // Gradual slowdown near flower
+                const slowdownFactor = Math.min(1, distToFlower / 50);
+                butterfly.velocity.x *= slowdownFactor;
+                butterfly.velocity.y *= slowdownFactor;
+            } else {
+                // Hover near flower
+                butterfly.velocity.x *= 0.95;
+                butterfly.velocity.y *= 0.95;
+            }
         }
+
+        // Add momentum and inertia
+        butterfly.velocity.x *= 0.98;
+        butterfly.velocity.y *= 0.98;
+        
+        // Random movement when flying freely
+        if (!butterfly.targetFlower && butterfly.state !== 'scared') {
+            const time = Date.now() / 1000;
+            butterfly.velocity.x += Math.sin(time * 2 + butterfly.birthTime) * 0.05;
+            butterfly.velocity.y += Math.cos(time * 3 + butterfly.birthTime) * 0.05;
+        }
+
+        // Update position
+        butterfly.x += butterfly.velocity.x;
+        butterfly.y += butterfly.velocity.y;
+        
+        // Update angle based on movement direction
+        const targetAngle = Math.atan2(butterfly.velocity.y, butterfly.velocity.x);
+        butterfly.angle += Math.sin(targetAngle - butterfly.angle) * 0.1;
     }
 
     function updateWindParticles() {

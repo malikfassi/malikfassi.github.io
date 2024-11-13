@@ -69,7 +69,12 @@ export const GARDEN_CONFIG = {
         SITTING: 'sitting',
         SPAWNING: 'spawning',
         LEAVING: 'leaving'
-    }
+    },
+    BUTTERFLY_SPAWN_INTERVAL: 3000, // Spawn every 3 seconds
+    BUTTERFLY_FEAR_RADIUS: 200, // Increased fear radius
+    BUTTERFLY_ESCAPE_SPEED: 8, // Faster escape speed
+    BUTTERFLY_ESCAPE_DURATION: 2000, // Stay scared longer
+    BUTTERFLY_MAX_COUNT: 15 // Maximum butterflies on screen
 };
 
 export const PIXEL_ART = {
@@ -134,6 +139,15 @@ export const PIXEL_ART = {
             [0,'#FF69B4','#FFD700','#FFA500','#FFD700','#FF69B4',0,0],
             ['#FFB7C5','#FF69B4','#FFD700','#FFA500','#FFD700','#FF69B4','#FFB7C5',0],
             [0,'#FFB7C5',0,'#FFB7C5',0,'#FFB7C5',0,0]
+        ]
+    ],
+    rotting: [
+        [
+            [0,0,'#8B4513',0,'#8B4513',0,0,0],
+            [0,'#8B4513','#A0522D',0,'#A0522D','#8B4513',0,0],
+            ['#8B4513','#A0522D','#8B4513',0,'#8B4513','#A0522D','#8B4513',0],
+            [0,'#8B4513','#A0522D',0,'#A0522D','#8B4513',0,0],
+            [0,0,'#8B4513',0,'#8B4513',0,0,0]
         ]
     ]
 };
