@@ -9,8 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let butterflies = [];
     let windParticles = [];
     const flowerMaxSize = GARDEN_CONFIG.FLOWER_MAX_SIZE;
-    const butterflySize = GARDEN_CONFIG.BUTTERFLY_SIZE;
-    const windParticleSize = GARDEN_CONFIG.WIND_PARTICLE_SIZE;
     let butterflySpawnTimeoutId = null;
 
     function resizeCanvas() {
@@ -62,6 +60,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getFlowerFrame(flower) {
         const { state, age } = flower;
+        
+        // Validate state exists in PIXEL_ART
+        if (!PIXEL_ART[state] || !PIXEL_ART[state].length) {
+            console.warn(`No frames found for flower state: ${state}`);
+            return PIXEL_ART.seed[0]; // Return default frame
+        }
+        
         const frameIndex = Math.floor((age / GARDEN_CONFIG.FRAME_DURATION)) % PIXEL_ART[state].length;
         return PIXEL_ART[state][frameIndex];
     }
@@ -94,6 +99,9 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.save();
         ctx.imageSmoothingEnabled = false;
         
+        const frame = getFlowerFrame(flower);
+        if (!frame) return; // Skip drawing if no frame
+        
         // Apply wind sway if not a seed
         if (state !== 'seed') {
             const sway = calculateWindSway(x, y, time);
@@ -102,10 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.translate(Math.floor(x), Math.floor(y));
         }
         
-        const frame = getFlowerFrame(flower);
         const growthProgress = Math.min(1, age / GARDEN_CONFIG.FLOWER_STAGES.BLOOMING);
         
-        // Draw frame with growing animation
         frame.forEach((row, i) => {
             if (i <= frame.length * growthProgress) {
                 row.forEach((pixel, j) => {
@@ -219,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 flower.state = 'growing';
             } else if (flower.state === 'growing') {
                 flower.size += 0.2; // Slower growth
-                if (flower.size >= flowerMaxSize) {
+                if (flower.size >= GARDEN_CONFIG.FLOWER_MAX_SIZE) {
                     flower.state = 'blooming';
                 }
             } else if (flower.state === 'blooming' && flower.age > GARDEN_CONFIG.FLOWER_BLOOMING_TO_ROTTING_AGE) {
