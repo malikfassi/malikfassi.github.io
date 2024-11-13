@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function resizeCanvas() {
         heatmapCanvas.width = window.innerWidth;
         heatmapCanvas.height = window.innerHeight;
+        console.log('Heatmap canvas resized to', heatmapCanvas.width, heatmapCanvas.height);
     }
 
     window.addEventListener('resize', resizeCanvas);
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
         heatmapCanvas.style.display = 'block';
         document.body.style.backgroundColor = '#d3d3d3'; // Light pale blue-grey
         document.addEventListener('mousemove', updateHeatmap);
+        console.log('Heatmap mode activated');
         requestAnimationFrame(fadeHeatmap);
     }
 
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.removeEventListener('mousemove', updateHeatmap);
         ctx.clearRect(0, 0, heatmapCanvas.width, heatmapCanvas.height);
         heatmapData = {};
+        console.log('Heatmap mode deactivated');
     }
 
     function getColor(intensity) {
@@ -43,6 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateHeatmap(e) {
         const x = Math.floor(e.clientX / cellSize);
         const y = Math.floor(e.clientY / cellSize);
+        console.log(`Updating heatmap at (${x}, ${y})`);
 
         for (let dx = -influenceRadius; dx <= influenceRadius; dx++) {
             for (let dy = -influenceRadius; dy <= influenceRadius; dy++) {
@@ -92,4 +96,6 @@ document.addEventListener('DOMContentLoaded', function() {
             this.textContent = 'Toggle Heatmap';
         }
     });
+
+    console.log('Heatmap script loaded');
 });
