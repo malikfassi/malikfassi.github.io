@@ -1,7 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
     const modeToggle = document.getElementById('modeToggle');
     const heatmapCanvas = document.getElementById('heatmapCanvas');
-    const ctx = heatmapCanvas.getContext('2d');
+    const ctx = heatmapCanvas?.getContext('2d');
+    if (!ctx) {
+        console.error('Could not get canvas context');
+        return;
+    }
     let isHeatmapMode = false;
     let heatmapData = {};
     const cellSize = 2;

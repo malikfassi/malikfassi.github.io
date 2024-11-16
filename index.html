@@ -9,26 +9,21 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <img src="profile.jpeg" alt="Malik FASSI FIHRI" class="profile-img">
-            <h1>Malik FASSI FIHRI</h1>
-            <p class="subtitle">Culinary Arts Candidate – CAP Cuisine</p>
-            <a href="mailto:malikfassifihri@gmail.com" class="email-btn">EMAIL ME</a>
-        </header>
+        <div class="profile-section">
+            <h1>MALIK FASSI FIHRI</h1>
+            <p class="title">CULINARY ARTS CANDIDATE – CAP CUISINE</p>
+            <a href="mailto:your.email@example.com" class="email-btn">EMAIL ME</a>
+        </div>
         <section class="section">
-            <h2>About Me</h2>
+            <h2>ABOUT ME</h2>
             <p>Aspiring chef with a background in software engineering, currently completing a CAP Cuisine at École La Source in Paris with a focus on vegetarian cuisine and fermentation. Experienced in high-volume meal preparation, serving 50+ pax daily during practical training, and passionate about sustainable, innovative culinary practices.</p>
         </section>
         <section class="section">
-            <h2>Education</h2>
-            <h3>CAP Cuisine – Specialization in Vegetarian & Fermentation</h3>
-            <p class="date">École La Source, Paris • Sept 2024 – Dec 2024</p>
-            <ul>
-                <li>Courses in Culinary Techniques: Preparation of stocks, sauces, and broths; working with fresh pasta, eggs, and legumes; cutting and cooking techniques for meats, poultry, and seafood; exploration of grains and legumes.</li>
-                <li>Fermentation Courses: Mastery of sourdough, lacto-fermented vegetables, kimchi, dairy ferments, and fermented beverages.</li>
-                <li>Patisserie Courses: Skills in pastries such as brioche, tarts, choux, and cream-based desserts.</li>
-                <li>Practical Restaurant Training: Weekly hands-on experience creating menus under chef supervision, preparing lunch for 50+ pax daily, with a focus on anti-waste initiatives developed by students.</li>
-            </ul>
+            <h2>EDUCATION</h2>
+            <div class="experience-item">
+                <h3>CAP Cuisine – Specialization in Vegetarian & Fermentation</h3>
+                <p class="experience-date">École La Source, Paris • Sept 2024 – Dec 2024</p>
+            </div>
         </section>
         <section class="section">
             <h2>Professional Experience</h2>
@@ -64,12 +59,13 @@
     </div>
     <nav class="navbar">
         <button id="modeToggle" class="mode-toggle">Toggle Heatmap</button>
-        <button id="gardenToggle" class="mode-toggle">Toggle Garden</button>
+        <button id="gardenButton">Toggle Garden Mode</button>
     </nav>
     <canvas id="heatmapCanvas" class="heatmap-canvas"></canvas>
     <canvas id="gardenCanvas" class="garden-canvas"></canvas>
     <script src="heatmap.js"></script>
     <script src="easteregg.js"></script>
+    <script type="module" src="config.js"></script>
     <script type="module" src="garden.js"></script>
 </body>
 </html>
