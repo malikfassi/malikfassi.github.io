@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const fadeRate = 0.98; // Rate at which the heatmap fades
     const intensityMultiplier = 20; // Multiplier to increase intensity faster
 
+    // Hide the heatmap canvas initially
+    heatmapCanvas.style.display = 'none';
+
     function resizeCanvas() {
         heatmapCanvas.width = window.innerWidth;
         heatmapCanvas.height = window.innerHeight;

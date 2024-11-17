@@ -126,3 +126,37 @@ h2 {
 .mb-2 {
     margin-bottom: 2rem;
 }
+
+#gardenCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.important-word {
+    transition: color 0.3s ease, font-size 0.3s ease, font-weight 0.3s ease;
+    color: initial; /* Default color */
+    font-size: 1em; /* Default size */
+    font-weight: normal; /* Default weight */
+}
+
+.targeted {
+    pointer-events: none; /* Prevent other butterflies from targeting */
+}
+
+.contact-image {
+    width: 100px;
+    height: auto;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.contact-image:hover {
+    transform: scale(1.1);
+}
