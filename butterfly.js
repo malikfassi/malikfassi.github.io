@@ -100,6 +100,11 @@ function handleButterflyFlying(butterfly) {
             console.log('No available targets found');
         }
     }
+
+    // Update angle based on movement direction
+    if (Math.abs(butterfly.velocity.x) > 0.1 || Math.abs(butterfly.velocity.y) > 0.1) {
+        butterfly.angle = Math.atan2(butterfly.velocity.y, butterfly.velocity.x);
+    }
 }
 
 function handleButterflySpawning(butterfly) {
@@ -140,17 +145,14 @@ function handleButterflyHovering(butterfly, currentTime) {
         butterfly.hoveringPosition.x = targetX;
         butterfly.hoveringPosition.y = targetY;
         
-        // Add slight movement while hovering
-        const hoverOffset = Math.sin(currentTime / 500) * 5;
+        // More pronounced hovering movement
+        const hoverOffset = Math.sin(currentTime / butterfly_config.HOVER_OSCILLATION.FREQUENCY * Math.PI * 2) 
+            * butterfly_config.HOVER_OSCILLATION.AMPLITUDE;
         butterfly.x = butterfly.hoveringPosition.x;
         butterfly.y = butterfly.hoveringPosition.y + hoverOffset;
 
-        // Change color of the word
-        butterfly.targetElement.style.color = butterfly.color;
-        
-        if (isDebugMode) {
-            console.log(`Hovering at: (${butterfly.x}, ${butterfly.y})`);
-        }
+        // Set angle for hovering (slight wobble)
+        butterfly.angle = Math.sin(currentTime / 1000) * 0.2;
     }
     console.log(`Hovering state - Time spent: ${currentTime - butterfly.hoveringStartTime}ms`);
     
@@ -205,6 +207,8 @@ function handleButterflyScared(butterfly, mouseX, mouseY) {
         butterfly.velocity.x = Math.cos(escapeAngle) * butterfly_config.ESCAPE_SPEED;
         butterfly.velocity.y = Math.sin(escapeAngle) * butterfly_config.ESCAPE_SPEED;
         console.log(`Escape velocity: (${butterfly.velocity.x.toFixed(2)}, ${butterfly.velocity.y.toFixed(2)})`);
+        // Set the butterfly's angle to match escape direction
+        butterfly.angle = escapeAngle + Math.PI; // Add PI to face away from mouse
     }
 }
 
@@ -264,7 +268,7 @@ function spawnButterfly() {
         x,
         y,
         size: butterfly_config.SIZE,
-        angle,
+        angle: Math.random() * Math.PI * 2, // Add initial random angle
         state: butterfly_config.STATES.FLYING,
         birthTime: Date.now(),
         scaredTime: 0,
@@ -399,6 +403,11 @@ function handleButterflyLeaving(butterfly) {
     if (butterfly.targetElement) {
         butterfly.targetElement.classList.remove("targeted");
         butterfly.targetElement = null;
+    }
+
+    // Update angle to match leaving direction
+    if (butterfly.velocity.x !== 0 || butterfly.velocity.y !== 0) {
+        butterfly.angle = Math.atan2(butterfly.velocity.y, butterfly.velocity.x);
     }
 }
 

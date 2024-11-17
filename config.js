@@ -51,7 +51,7 @@ export const wind_config = {
 
 export const butterfly_config = {
     FEAR_RADIUS: 150,
-    ESCAPE_SPEED: 8,
+    ESCAPE_SPEED: 6,
     SCARED_DURATION: 1000,
     STATES: {
         FLYING: 'flying',
@@ -60,8 +60,8 @@ export const butterfly_config = {
         LEAVING: 'leaving'
     },
     SIZE: 15,
-    MAX_COUNT: 1,
-    PEACEFUL_SPEED: 3,
+    MAX_COUNT: 5,
+    PEACEFUL_SPEED: 2,
     MAX_SPEED: 5,
     MIN_SPEED: 0.5,
     SCROLL_ADJUSTMENT_SPEED: 1.5,
@@ -73,5 +73,9 @@ export const butterfly_config = {
     },
     HOVER_WORDS_BEFORE_LEAVING: 3,
     LEAVING_SPEED: 5,
-    DEBUG: true
+    DEBUG: true,
+    HOVER_OSCILLATION: {
+        AMPLITUDE: 8,
+        FREQUENCY: 2000
+    }
 };
