@@ -1,7 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const modeToggle = document.getElementById('modeToggle');
     const heatmapCanvas = document.getElementById('heatmapCanvas');
-    const ctx = heatmapCanvas?.getContext('2d');
+    if (!heatmapCanvas) {
+        console.error("Creating heatmap canvas");
+        const canvas = document.createElement('canvas');
+        canvas.id = 'heatmapCanvas';
+        canvas.className = 'heatmap-canvas';
+        document.body.appendChild(canvas);
+    }
+
+    const ctx = heatmapCanvas.getContext('2d');
     if (!ctx) {
         console.error('Could not get canvas context');
         return;

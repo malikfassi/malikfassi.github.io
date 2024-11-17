@@ -1,3 +1,9 @@
+export let isDebugMode = false;
+export function toggleDebug() {
+    isDebugMode = !isDebugMode;
+    return isDebugMode;
+}
+
 export const color_config = {
     PASTEL_COLORS: [
         '#FF8A8A',  // Darker Soft Red
@@ -44,23 +50,28 @@ export const wind_config = {
 };
 
 export const butterfly_config = {
-    SIZE: 15,
-    MAX_COUNT: 1,
-    PEACEFUL_SPEED: 2,
-    FEAR_RADIUS: 100,
-    ESCAPE_SPEED: 5,
-    SAFE_DISTANCE: 200,
-    INTERACTION_RADIUS: 50,
+    FEAR_RADIUS: 150,
+    ESCAPE_SPEED: 8,
+    SCARED_DURATION: 1000,
     STATES: {
-        SPAWNING: 'spawning',
         FLYING: 'flying',
-        SCARED: 'scared',
         HOVERING: 'hovering',
+        SCARED: 'scared',
         LEAVING: 'leaving'
     },
+    SIZE: 15,
+    MAX_COUNT: 1,
+    PEACEFUL_SPEED: 3,
+    MAX_SPEED: 5,
+    MIN_SPEED: 0.5,
+    SCROLL_ADJUSTMENT_SPEED: 1.5,
+    SAFE_DISTANCE: 200,
+    INTERACTION_RADIUS: 50,
     SPAWN_CONFIG: {
         MIN_INTERVAL: 100,
         MAX_INTERVAL: 200
     },
-    HOVER_WORDS_BEFORE_LEAVING: 3
+    HOVER_WORDS_BEFORE_LEAVING: 3,
+    LEAVING_SPEED: 5,
+    DEBUG: true
 };

@@ -11,7 +11,7 @@ import {
   scheduleNextSpawn,
   drawButterfly,
 } from "./butterfly.js";
-import { butterfly_config } from "./config.js";
+import { isDebugMode, toggleDebug } from './config.js';
 
 // Garden state and elements
 export let isGardenMode = false;
@@ -28,27 +28,44 @@ const LOG_INTERVAL = 60; // Log every 60 frames
 
 // Initialize garden when the DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-  initializeGardenElements();
-  activateGarden(); // Activate garden mode by default
+    // Wait a small amount of time to ensure all elements are loaded
+    setTimeout(() => {
+        initializeGardenElements();
+        activateGarden(); // Activate garden mode by default
+    }, 100);
 });
 
 function initializeGardenElements() {
-  gardenButton = document.getElementById("gardenButton");
-  gardenCanvas = document.getElementById("gardenCanvas");
+    gardenCanvas = document.getElementById("gardenCanvas");
+    if (!gardenCanvas) {
+        console.error("Creating canvas element");
+        gardenCanvas = document.createElement('canvas');
+        gardenCanvas.id = 'gardenCanvas';
+        gardenCanvas.className = 'garden-canvas';
+        document.body.appendChild(gardenCanvas);
+    }
 
-  if (!gardenButton || !gardenCanvas) {
-    console.error("Garden elements not found in the DOM");
-    return;
-  }
+    ctx = gardenCanvas.getContext("2d");
 
-  ctx = gardenCanvas.getContext("2d");
+    // Add resize handler
+    window.addEventListener("resize", handleCanvasResize);
+    handleCanvasResize(); // Initial resize
 
-  // Add resize handler
-  window.addEventListener("resize", handleCanvasResize);
-  handleCanvasResize(); // Initial resize to set dimensions
+    // Add event listeners for interaction
+    gardenCanvas.addEventListener("mousemove", handleMouseMove);
+    gardenCanvas.addEventListener("click", handleCanvasClick);
+    
+    console.log('Garden elements initialized');
 
-  // Add event listeners for interaction
-  gardenCanvas.addEventListener("click", (event) => plantSeed(event, gardenCanvas));
+    // Add debug toggle
+    const debugToggle = document.getElementById('debugToggle');
+    if (debugToggle) {
+        debugToggle.addEventListener('click', () => {
+            const debugEnabled = toggleDebug();
+            debugToggle.style.background = debugEnabled ? '#ff4444' : '#333';
+            console.log('Debug mode:', debugEnabled);
+        });
+    }
 }
 
 function handleCanvasResize() {
@@ -149,30 +166,14 @@ export function deactivateGarden() {
 function animateGarden() {
   if (!isGardenMode) return;
 
-  // Log only every LOG_INTERVAL frames
-  if (frameCount % LOG_INTERVAL === 0) {
-    console.log(`---Garden Status (Frame ${frameCount})---`);
-    console.log(`Active butterflies: ${butterflies.length}`);
-    console.log(`Viewport scroll: (${window.scrollX}, ${window.scrollY})`);
-    
-    // Log each butterfly's state once per interval
-    butterflies.forEach((butterfly, index) => {
-      if (butterfly.state !== butterfly.lastLoggedState) {
-        console.log(`Butterfly ${index} state changed to: ${butterfly.state}`);
-        butterfly.lastLoggedState = butterfly.state;
-      }
-    });
-  }
-  frameCount++;
-
   ctx.clearRect(0, 0, gardenCanvas.width, gardenCanvas.height);
 
-  // Update and draw butterflies
-  butterflies.forEach((butterfly, index) => {
+  butterflies.forEach(butterfly => {
     updateButterfly(butterfly, mouseX, mouseY);
     drawButterfly(ctx, butterfly);
   });
 
+  drawDebugInfo(ctx);
   requestAnimationFrame(animateGarden);
 }
 
@@ -208,4 +209,40 @@ function updateCaughtButterfliesDisplay() {
   }
 }
 
-gardenCanvas.addEventListener('click', handleCanvasClick);
+function drawDebugInfo(ctx) {
+    if (!isDebugMode) return;
+    
+    butterflies.forEach(butterfly => {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.font = '12px Arial';
+        
+        // Draw state and target info
+        ctx.fillText(`State: ${butterfly.state}`, butterfly.x + 20, butterfly.y - 20);
+        ctx.fillText(`Target: ${butterfly.targetElement?.textContent || 'none'}`, butterfly.x + 20, butterfly.y - 5);
+        
+        // Draw position info
+        ctx.fillText(`Pos: (${Math.round(butterfly.x)}, ${Math.round(butterfly.y)})`, butterfly.x + 20, butterfly.y + 10);
+        
+        // If there's a target, draw line to target
+        if (butterfly.targetElement) {
+            const rect = butterfly.targetElement.getBoundingClientRect();
+            const targetX = rect.left + rect.width/2 + window.scrollX;
+            const targetY = rect.top + rect.height/2 + window.scrollY;
+            
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.moveTo(butterfly.x, butterfly.y);
+            ctx.lineTo(targetX, targetY);
+            ctx.stroke();
+            
+            // Draw target position
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.beginPath();
+            ctx.arc(targetX, targetY, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.restore();
+    });
+}
