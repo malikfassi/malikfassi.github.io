@@ -149,12 +149,13 @@ h2 {
 }
 
 .contact-image {
-    width: 100px;
-    height: auto;
+    width: 200px;
+    height: 200px;
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.3s ease;
+    object-fit: cover;
 }
 
 .contact-image:hover {
