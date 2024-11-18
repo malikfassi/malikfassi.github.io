@@ -222,19 +222,15 @@ function handleButterflyScared(butterfly, mouseX, mouseY, currentTime, gardenCan
     }
 }
 
-export function scheduleNextSpawn() {
-  if (butterflySpawnTimeoutId) {
-    clearTimeout(butterflySpawnTimeoutId);
-  }
+let spawnTimeout = null;
 
-  const nextSpawnDelay =
-    butterfly_config.SPAWN_CONFIG.MIN_INTERVAL * 2 +
-    Math.random() *
-      (butterfly_config.SPAWN_CONFIG.MAX_INTERVAL -
-        butterfly_config.SPAWN_CONFIG.MIN_INTERVAL) *
-      2;
-
-  butterflySpawnTimeoutId = setTimeout(spawnButterfly, nextSpawnDelay);
+function scheduleNextSpawn() {
+    if (spawnTimeout) clearTimeout(spawnTimeout);
+    
+    const delay = butterfly_config.SPAWN_CONFIG.MIN_INTERVAL + 
+                  Math.random() * (butterfly_config.SPAWN_CONFIG.MAX_INTERVAL - butterfly_config.SPAWN_CONFIG.MIN_INTERVAL);
+    
+    spawnTimeout = setTimeout(spawnButterfly, delay);
 }
 
 function spawnButterfly() {
@@ -272,36 +268,26 @@ function spawnButterfly() {
             break;
     }
 
-    // Initial velocity pointing inward
-    const centerX = viewportWidth / 2;
-    const centerY = (viewportHeight / 2) + scrollY;
-    const angle = Math.atan2(centerY - y, centerX - x);
-    
-    // Create new butterfly
     const butterfly = {
         x,
         y,
         size: butterfly_config.SIZE,
         color: color_config.PASTEL_COLORS[Math.floor(Math.random() * color_config.PASTEL_COLORS.length)],
-        angle: angle,
-        velocity: {
-            x: Math.cos(angle) * butterfly_config.PEACEFUL_SPEED,
-            y: Math.sin(angle) * butterfly_config.PEACEFUL_SPEED
-        },
+        angle: 0,
+        velocity: { x: 0, y: 0 },
         state: butterfly_config.STATES.FLYING,
         wordsHovered: 0,
         lastScrollY: window.scrollY,
         lastScrollX: window.scrollX,
-        // Add unique offset for non-synchronized movement
         timeOffset: Math.random() * 1000
     };
 
-    // Add the butterfly to the array
     butterflies.push(butterfly);
-
-    // Schedule next spawn
     scheduleNextSpawn();
 }
+
+// Export for use in garden.js
+export { spawnButterfly, scheduleNextSpawn };
 
 export function drawButterfly(ctx, butterfly) {
   const { x, y, angle, color, targetElement } = butterfly;
