@@ -239,58 +239,67 @@ export function scheduleNextSpawn() {
 
 function spawnButterfly() {
     if (butterflies.length >= butterfly_config.MAX_COUNT) {
+        // If we reached the max count, schedule the next spawn
         scheduleNextSpawn();
         return;
     }
 
-    // Spawn from random edge
-    const edge = Math.floor(Math.random() * 4);
-    let x, y, angle;
-
-    switch (edge) {
-        case 0: // top
-            x = Math.random() * window.innerWidth;
-            y = -20;
-            angle = Math.PI / 2;
+    // Randomly choose which border to spawn from (0: top, 1: right, 2: bottom, 3: left)
+    const border = Math.floor(Math.random() * 4);
+    let x, y;
+    
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const scrollY = window.scrollY;
+    
+    // Set initial position based on chosen border
+    switch(border) {
+        case 0: // Top
+            x = Math.random() * viewportWidth;
+            y = -butterfly_config.SIZE + scrollY;
             break;
-        case 1: // right
-            x = window.innerWidth + 20;
-            y = Math.random() * window.innerHeight;
-            angle = Math.PI;
+        case 1: // Right
+            x = viewportWidth + butterfly_config.SIZE;
+            y = Math.random() * viewportHeight + scrollY;
             break;
-        case 2: // bottom
-            x = Math.random() * window.innerWidth;
-            y = window.innerHeight + 20;
-            angle = -Math.PI / 2;
+        case 2: // Bottom
+            x = Math.random() * viewportWidth;
+            y = viewportHeight + butterfly_config.SIZE + scrollY;
             break;
-        case 3: // left
-            x = -20;
-            y = Math.random() * window.innerHeight;
-            angle = 0;
+        case 3: // Left
+            x = -butterfly_config.SIZE;
+            y = Math.random() * viewportHeight + scrollY;
             break;
     }
 
-    const color = color_config.PASTEL_COLORS[
-        Math.floor(Math.random() * color_config.PASTEL_COLORS.length)
-    ];
-
-    butterflies.push({
+    // Initial velocity pointing inward
+    const centerX = viewportWidth / 2;
+    const centerY = (viewportHeight / 2) + scrollY;
+    const angle = Math.atan2(centerY - y, centerX - x);
+    
+    // Create new butterfly
+    const butterfly = {
         x,
         y,
         size: butterfly_config.SIZE,
-        angle: Math.random() * Math.PI * 2, // Add initial random angle
-        state: butterfly_config.STATES.FLYING,
-        birthTime: Date.now(),
-        scaredTime: 0,
+        color: color_config.PASTEL_COLORS[Math.floor(Math.random() * color_config.PASTEL_COLORS.length)],
+        angle: angle,
         velocity: {
             x: Math.cos(angle) * butterfly_config.PEACEFUL_SPEED,
-            y: Math.sin(angle) * butterfly_config.PEACEFUL_SPEED,
+            y: Math.sin(angle) * butterfly_config.PEACEFUL_SPEED
         },
-        targetElement: null,
-        color,
+        state: butterfly_config.STATES.FLYING,
         wordsHovered: 0,
-    });
+        lastScrollY: window.scrollY,
+        lastScrollX: window.scrollX,
+        // Add unique offset for non-synchronized movement
+        timeOffset: Math.random() * 1000
+    };
 
+    // Add the butterfly to the array
+    butterflies.push(butterfly);
+
+    // Schedule next spawn
     scheduleNextSpawn();
 }
 
