@@ -136,7 +136,7 @@ function handleButterflySpawning(butterfly) {
 
 function handleButterflyHovering(butterfly, currentTime) {
     if (butterfly.targetElement && butterfly.hoveringPosition) {
-        // Update target position in case of scroll
+        // Update target position considering scroll
         const rect = butterfly.targetElement.getBoundingClientRect();
         const targetX = rect.left + rect.width/2 + window.scrollX;
         const targetY = rect.top + rect.height/2 + window.scrollY;
@@ -148,17 +148,6 @@ function handleButterflyHovering(butterfly, currentTime) {
         // More pronounced hovering movement
         const hoverOffset = Math.sin(currentTime / butterfly_config.HOVER_OSCILLATION.FREQUENCY * Math.PI * 2) 
             * butterfly_config.HOVER_OSCILLATION.AMPLITUDE;
-        butterfly.x = butterfly.hoveringPosition.x;
-        butterfly.y = butterfly.hoveringPosition.y + hoverOffset;
-
-        // Set angle for hovering (slight wobble)
-        butterfly.angle = Math.sin(currentTime / 1000) * 0.2;
-    }
-    console.log(`Hovering state - Time spent: ${currentTime - butterfly.hoveringStartTime}ms`);
-    
-    if (butterfly.hoveringPosition) {
-        // Add slight movement while hovering
-        const hoverOffset = Math.sin(currentTime / 500) * 5;
         butterfly.x = butterfly.hoveringPosition.x;
         butterfly.y = butterfly.hoveringPosition.y + hoverOffset;
 

@@ -69,48 +69,48 @@ function initializeGardenElements() {
 }
 
 function handleCanvasResize() {
-  if (!gardenCanvas) return;
+    if (!gardenCanvas) return;
 
-  console.log('---Canvas Resize---');
-  console.log(`Old dimensions: ${gardenCanvas.width}x${gardenCanvas.height}`);
-  console.log(`Window dimensions: ${window.innerWidth}x${window.innerHeight}`);
-  console.log(`Scroll position: (${window.scrollX}, ${window.scrollY})`);
-  console.log(`Viewport: ${window.visualViewport ? 
-    `${window.visualViewport.width}x${window.visualViewport.height}` : 'Not available'}`);
+    console.log('---Canvas Resize---');
+    console.log(`Old dimensions: ${gardenCanvas.width}x${gardenCanvas.height}`);
+    console.log(`Window dimensions: ${window.innerWidth}x${window.innerHeight}`);
+    console.log(`Scroll position: (${window.scrollX}, ${window.scrollY})`);
+    console.log(`Viewport: ${window.visualViewport ? 
+        `${window.visualViewport.width}x${window.visualViewport.height}` : 'Not available'}`);
 
-  const oldWidth = gardenCanvas.width;
-  const oldHeight = gardenCanvas.height;
-  const oldAspectRatio = oldWidth / oldHeight;
+    const oldWidth = gardenCanvas.width;
+    const oldHeight = gardenCanvas.height;
+    const oldAspectRatio = oldWidth / oldHeight;
 
-  // Store relative positions of butterflies before resize
-  const relativePositions = butterflies.map(butterfly => ({
-    xRatio: butterfly.x / oldWidth,
-    yRatio: butterfly.y / oldHeight,
-    velocityXRatio: butterfly.velocity.x / oldWidth,
-    velocityYRatio: butterfly.velocity.y / oldHeight
-  }));
+    // Store relative positions of butterflies before resize
+    const relativePositions = butterflies.map(butterfly => ({
+        xRatio: butterfly.x / oldWidth,
+        yRatio: butterfly.y / oldHeight,
+        velocityXRatio: butterfly.velocity.x / oldWidth,
+        velocityYRatio: butterfly.velocity.y / oldHeight
+    }));
 
-  // Set canvas dimensions to match the viewport size
-  gardenCanvas.width = window.innerWidth;
-  gardenCanvas.height = window.innerHeight;
-  const newAspectRatio = gardenCanvas.width / gardenCanvas.height;
+    // Set canvas dimensions to match the viewport size
+    gardenCanvas.width = window.innerWidth;
+    gardenCanvas.height = window.innerHeight;
+    const newAspectRatio = gardenCanvas.width / gardenCanvas.height;
 
-  // Update butterfly positions maintaining relative positions
-  if (butterflies.length > 0 && oldWidth > 0 && oldHeight > 0) {
-    butterflies.forEach((butterfly, index) => {
-      const relative = relativePositions[index];
-      
-      // Update positions maintaining aspect ratio
-      butterfly.x = relative.xRatio * gardenCanvas.width;
-      butterfly.y = relative.yRatio * gardenCanvas.height;
-      
-      // Scale velocities proportionally
-      butterfly.velocity.x = relative.velocityXRatio * gardenCanvas.width;
-      butterfly.velocity.y = relative.velocityYRatio * gardenCanvas.height;
-    });
-  }
+    // Update butterfly positions maintaining relative positions
+    if (butterflies.length > 0 && oldWidth > 0 && oldHeight > 0) {
+        butterflies.forEach((butterfly, index) => {
+            const relative = relativePositions[index];
+            
+            // Update positions maintaining aspect ratio
+            butterfly.x = relative.xRatio * gardenCanvas.width;
+            butterfly.y = relative.yRatio * gardenCanvas.height;
+            
+            // Scale velocities proportionally
+            butterfly.velocity.x = relative.velocityXRatio * gardenCanvas.width;
+            butterfly.velocity.y = relative.velocityYRatio * gardenCanvas.height;
+        });
+    }
 
-  console.log("Canvas resized:", gardenCanvas.width, gardenCanvas.height);
+    console.log("Canvas resized:", gardenCanvas.width, gardenCanvas.height);
 }
 
 export function activateGarden() {
