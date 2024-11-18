@@ -56,22 +56,23 @@ export function updateButterfly(butterfly, mouseX, mouseY) {
 }
 
 function handleButterflyFlying(butterfly) {
-    // Log state and target when flying
-    console.log(`Butterfly state: ${butterfly.state}`);
-    console.log(`Current target: ${butterfly.targetElement ? butterfly.targetElement.textContent : 'none'}`);
+    if (!butterfly.targetElement) {
+        const newTarget = findNewTarget();
+        if (newTarget) {
+            butterfly.targetElement = newTarget;
+            newTarget.classList.add("targeted");
+            console.log(`New target assigned: ${newTarget.textContent}`);
+        }
+    }
 
-    // If the butterfly has a target element, fly towards it
     if (butterfly.targetElement) {
-        // Update target position considering scroll
-        const rect = butterfly.targetElement.getBoundingClientRect();
-        butterfly.targetX = rect.left + rect.width/2 + window.scrollX;
-        butterfly.targetY = rect.top + rect.height/2 + window.scrollY;
+        const targetPosition = getElementPagePosition(butterfly.targetElement);
+        butterfly.targetX = targetPosition.x;
+        butterfly.targetY = targetPosition.y;
         
         const dx = butterfly.targetX - butterfly.x;
         const dy = butterfly.targetY - butterfly.y;
         const distance = Math.hypot(dx, dy);
-
-        console.log(`Flying to target: distance=${distance}, targetPos=(${butterfly.targetX}, ${butterfly.targetY})`);
 
         if (distance > 1) {
             butterfly.velocity.x += (dx / distance) * 0.5;
@@ -79,47 +80,29 @@ function handleButterflyFlying(butterfly) {
         } else {
             butterfly.state = butterfly_config.STATES.HOVERING;
             butterfly.hoveringPosition = { 
-                x: butterfly.targetX, 
+                x: butterfly.targetX,
                 y: butterfly.targetY 
             };
             butterfly.hoveringStartTime = Date.now();
         }
-    } else {
-        // Find new target
-        const potentialTargets = [
-            ...document.querySelectorAll(".important-word:not(.targeted)")
-        ];
-        console.log(`Available targets: ${potentialTargets.length}`);
-        
-        if (potentialTargets.length > 0) {
-            const target = potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
-            butterfly.targetElement = target;
-            target.classList.add("targeted");
-            console.log(`New target assigned: ${target.textContent}`);
-        } else {
-            console.log('No available targets found');
-        }
-    }
-
-    // Update angle based on movement direction
-    if (Math.abs(butterfly.velocity.x) > 0.1 || Math.abs(butterfly.velocity.y) > 0.1) {
-        butterfly.angle = Math.atan2(butterfly.velocity.y, butterfly.velocity.x);
     }
 }
 
 function handleButterflySpawning(butterfly) {
-  // Gradually move into screen
+  // Gradually move into screen using buffer zone from config
+  const EDGE_BUFFER = butterfly_config.EDGE_BUFFER || 50; // Default to 50 if not set
+  
   const targetY =
     butterfly.y < 0
-      ? 50
+      ? EDGE_BUFFER
       : butterfly.y > gardenCanvas.height
-      ? gardenCanvas.height - 50
+      ? gardenCanvas.height - EDGE_BUFFER
       : butterfly.y;
   const targetX =
     butterfly.x < 0
-      ? 50
+      ? EDGE_BUFFER
       : butterfly.x > gardenCanvas.width
-      ? gardenCanvas.width - 50
+      ? gardenCanvas.width - EDGE_BUFFER
       : butterfly.x;
 
   butterfly.x += (targetX - butterfly.x) * 0.05;
@@ -136,20 +119,27 @@ function handleButterflySpawning(butterfly) {
 
 function handleButterflyHovering(butterfly, currentTime) {
     if (butterfly.targetElement && butterfly.hoveringPosition) {
-        // Update target position considering scroll
-        const rect = butterfly.targetElement.getBoundingClientRect();
-        const targetX = rect.left + rect.width/2 + window.scrollX;
-        const targetY = rect.top + rect.height/2 + window.scrollY;
+        const targetPosition = getElementPagePosition(butterfly.targetElement);
         
-        // Update hovering position to match target
-        butterfly.hoveringPosition.x = targetX;
-        butterfly.hoveringPosition.y = targetY;
+        // Update hovering position
+        butterfly.hoveringPosition.x = targetPosition.x;
+        butterfly.hoveringPosition.y = targetPosition.y;
         
-        // More pronounced hovering movement
+        // Add coordinates span if it doesn't exist
+        if (!butterfly.targetElement.querySelector('.word-coordinates')) {
+            const coordSpan = document.createElement('span');
+            coordSpan.className = 'word-coordinates';
+            butterfly.targetElement.appendChild(coordSpan);
+            coordSpan.textContent = `(${Math.round(targetPosition.x)}, ${Math.round(targetPosition.y)})`;
+        }
+
+        // Apply hover oscillation
         const hoverOffset = Math.sin(currentTime / butterfly_config.HOVER_OSCILLATION.FREQUENCY * Math.PI * 2) 
             * butterfly_config.HOVER_OSCILLATION.AMPLITUDE;
-        butterfly.x = butterfly.hoveringPosition.x;
-        butterfly.y = butterfly.hoveringPosition.y + hoverOffset;
+            
+        // Update butterfly position
+        butterfly.x = targetPosition.x;
+        butterfly.y = targetPosition.y + hoverOffset;
 
         // Change color of the word
         if (butterfly.targetElement) {
@@ -402,46 +392,115 @@ function handleButterflyLeaving(butterfly) {
 
 // Add this as a separate function to handle scroll properly
 function handleScroll(butterfly) {
-    const currentScroll = {
-        x: window.scrollX,
-        y: window.scrollY
-    };
-    
-    if (!butterfly.lastScroll) {
-        butterfly.lastScroll = {...currentScroll};
+    if (!butterfly.lastScrollY) {
+        butterfly.lastScrollY = window.scrollY;
+        butterfly.lastScrollX = window.scrollX;
         return;
     }
 
-    // Calculate scroll delta
-    const scrollDeltaY = currentScroll.y - butterfly.lastScroll.y;
-    const scrollDeltaX = currentScroll.x - butterfly.lastScroll.x;
+    const deltaY = window.scrollY - butterfly.lastScrollY;
+    const deltaX = window.scrollX - butterfly.lastScrollX;
 
-    if (Math.abs(scrollDeltaY) > 0.1 || Math.abs(scrollDeltaX) > 0.1) {
-        // Adjust butterfly position
-        butterfly.y += scrollDeltaY;
-        butterfly.x += scrollDeltaX;
+    // Update butterfly position with scroll
+    butterfly.y += deltaY;
+    butterfly.x += deltaX;
 
-        // If hovering, adjust hovering position
-        if (butterfly.hoveringPosition) {
-            butterfly.hoveringPosition.y += scrollDeltaY;
-            butterfly.hoveringPosition.x += scrollDeltaX;
-        }
-
-        // If has target, update target position
-        if (butterfly.targetElement) {
-            const rect = butterfly.targetElement.getBoundingClientRect();
-            butterfly.targetY = rect.top + rect.height/2 + window.scrollY;
-            butterfly.targetX = rect.left + rect.width/2 + window.scrollX;
-        }
-
-        if (isDebugMode) {
-            console.log(`Scroll adjusted: deltaY=${scrollDeltaY}, deltaX=${scrollDeltaX}`);
-            console.log(`New position: (${butterfly.x}, ${butterfly.y})`);
-            if (butterfly.targetElement) {
-                console.log(`Target position: (${butterfly.targetX}, ${butterfly.targetY})`);
-            }
-        }
+    // Update target position if exists
+    if (butterfly.targetElement) {
+        const rect = butterfly.targetElement.getBoundingClientRect();
+        butterfly.targetX = rect.left + rect.width/2 + window.scrollX;
+        butterfly.targetY = rect.top + rect.height/2 + window.scrollY;
     }
 
-    butterfly.lastScroll = {...currentScroll};
+    // Update hovering position if in hovering state
+    if (butterfly.state === butterfly_config.STATES.HOVERING && butterfly.hoveringPosition) {
+        butterfly.hoveringPosition.x += deltaX;
+        butterfly.hoveringPosition.y += deltaY;
+    }
+
+    butterfly.lastScrollY = window.scrollY;
+    butterfly.lastScrollX = window.scrollX;
+
+    // Update all word coordinates
+    document.querySelectorAll('.important-word').forEach(element => {
+        const rect = element.getBoundingClientRect();
+        const canvasRect = gardenCanvas.getBoundingClientRect();
+        const x = rect.left + rect.width/2 - canvasRect.left;
+        const y = rect.top + rect.height/2 - canvasRect.top;
+        
+        element.setAttribute('data-x', Math.round(x));
+        element.setAttribute('data-y', Math.round(y));
+        
+        const coordSpan = element.querySelector('.word-coordinates');
+        if (coordSpan) {
+            coordSpan.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
+        }
+    });
+}
+
+function getElementPagePosition(element) {
+    const rect = element.getBoundingClientRect();
+    const canvasRect = gardenCanvas.getBoundingClientRect();
+    
+    // Calculate position relative to canvas
+    const position = {
+        x: rect.left + rect.width/2 - canvasRect.left,
+        y: rect.top + rect.height/2 - canvasRect.top
+    };
+
+    if (butterfly_config.DEBUG) {
+        console.log('Element position:', {
+            elementRect: rect,
+            canvasRect: canvasRect,
+            final: position
+        });
+    }
+
+    return position;
+}
+
+function findNewTarget() {
+    // First try to find targets in the current viewport
+    const viewportTargets = [...document.querySelectorAll(".important-word:not(.targeted)")].filter(element => {
+        const rect = element.getBoundingClientRect();
+        const canvasRect = gardenCanvas.getBoundingClientRect();
+        
+        // Calculate and store coordinates
+        const x = rect.left + rect.width/2 - canvasRect.left;
+        const y = rect.top + rect.height/2 - canvasRect.top;
+        
+        // Update data attributes
+        element.setAttribute('data-x', Math.round(x));
+        element.setAttribute('data-y', Math.round(y));
+        
+        // Add coordinate display span if not exists
+        if (!element.querySelector('.word-coordinates')) {
+            const coordSpan = document.createElement('span');
+            coordSpan.className = 'word-coordinates';
+            coordSpan.style.cssText = 'position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: red;';
+            element.style.position = 'relative';
+            coordSpan.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
+            element.appendChild(coordSpan);
+        }
+        
+        return rect.top >= 0 && rect.bottom <= window.innerHeight;
+    });
+
+    // Rest of the function remains the same
+    const allTargets = viewportTargets.length > 0 ? 
+        viewportTargets : 
+        [...document.querySelectorAll(".important-word:not(.targeted)")];
+
+    if (allTargets.length > 0) {
+        const target = allTargets[Math.floor(Math.random() * allTargets.length)];
+        return target;
+    }
+
+    return null;
+}
+
+// In your debug toggle function
+function toggleDebug() {
+    isDebugMode = !isDebugMode;
+    document.body.classList.toggle('debug-mode', isDebugMode);
 }

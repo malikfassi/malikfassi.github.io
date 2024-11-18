@@ -1,4 +1,4 @@
-import { garden_config } from "./config.js";
+import { garden_config, butterfly_config } from "./config.js";
 import { plantSeed, updateFlower, flowers } from "./flower.js";
 import {
   updateWindParticles,
@@ -66,52 +66,69 @@ function initializeGardenElements() {
             console.log('Debug mode:', debugEnabled);
         });
     }
+
+    // Add scroll event listener
+    window.addEventListener('scroll', handleGlobalScroll);
+}
+
+function handleGlobalScroll() {
+    butterflies.forEach(butterfly => {
+        if (butterfly.targetElement) {
+            const rect = butterfly.targetElement.getBoundingClientRect();
+            butterfly.targetX = rect.left + rect.width/2 + window.scrollX;
+            butterfly.targetY = rect.top + rect.height/2 + window.scrollY;
+            
+            if (butterfly.state === butterfly_config.STATES.HOVERING && butterfly.hoveringPosition) {
+                butterfly.hoveringPosition.x = butterfly.targetX;
+                butterfly.hoveringPosition.y = butterfly.targetY;
+            }
+        }
+    });
 }
 
 function handleCanvasResize() {
     if (!gardenCanvas) return;
+    
+    // Get the full document height including scrollable content
+    const docHeight = Math.max(
+        document.body.scrollHeight,
+        document.body.offsetHeight,
+        document.documentElement.clientHeight,
+        document.documentElement.scrollHeight,
+        document.documentElement.offsetHeight
+    );
+    
+    // Get the full document width
+    const docWidth = Math.max(
+        document.body.scrollWidth,
+        document.body.offsetWidth,
+        document.documentElement.clientWidth,
+        document.documentElement.scrollWidth,
+        document.documentElement.offsetWidth
+    );
 
-    console.log('---Canvas Resize---');
-    console.log(`Old dimensions: ${gardenCanvas.width}x${gardenCanvas.height}`);
-    console.log(`Window dimensions: ${window.innerWidth}x${window.innerHeight}`);
-    console.log(`Scroll position: (${window.scrollX}, ${window.scrollY})`);
-    console.log(`Viewport: ${window.visualViewport ? 
-        `${window.visualViewport.width}x${window.visualViewport.height}` : 'Not available'}`);
+    // Update canvas dimensions
+    gardenCanvas.width = docWidth;
+    gardenCanvas.height = docHeight;
+    
+    // Update canvas style to match dimensions
+    gardenCanvas.style.width = `${docWidth}px`;
+    gardenCanvas.style.height = `${docHeight}px`;
 
-    const oldWidth = gardenCanvas.width;
-    const oldHeight = gardenCanvas.height;
-    const oldAspectRatio = oldWidth / oldHeight;
-
-    // Store relative positions of butterflies before resize
-    const relativePositions = butterflies.map(butterfly => ({
-        xRatio: butterfly.x / oldWidth,
-        yRatio: butterfly.y / oldHeight,
-        velocityXRatio: butterfly.velocity.x / oldWidth,
-        velocityYRatio: butterfly.velocity.y / oldHeight
-    }));
-
-    // Set canvas dimensions to match the viewport size
-    gardenCanvas.width = window.innerWidth;
-    gardenCanvas.height = window.innerHeight;
-    const newAspectRatio = gardenCanvas.width / gardenCanvas.height;
-
-    // Update butterfly positions maintaining relative positions
-    if (butterflies.length > 0 && oldWidth > 0 && oldHeight > 0) {
-        butterflies.forEach((butterfly, index) => {
-            const relative = relativePositions[index];
-            
-            // Update positions maintaining aspect ratio
-            butterfly.x = relative.xRatio * gardenCanvas.width;
-            butterfly.y = relative.yRatio * gardenCanvas.height;
-            
-            // Scale velocities proportionally
-            butterfly.velocity.x = relative.velocityXRatio * gardenCanvas.width;
-            butterfly.velocity.y = relative.velocityYRatio * gardenCanvas.height;
-        });
+    if (butterfly_config.DEBUG) {
+        console.log('Canvas resized to:', { width: docWidth, height: docHeight });
     }
-
-    console.log("Canvas resized:", gardenCanvas.width, gardenCanvas.height);
 }
+
+// Call on initialization and window resize
+window.addEventListener('resize', handleCanvasResize);
+window.addEventListener('load', handleCanvasResize);
+
+// Also call when content changes might affect document height
+const observer = new ResizeObserver(() => {
+    handleCanvasResize();
+});
+observer.observe(document.body);
 
 export function activateGarden() {
   isGardenMode = true;
@@ -161,6 +178,8 @@ export function deactivateGarden() {
   butterflies.length = 0;
   flowers.length = 0;
   windParticles.length = 0;
+
+  window.removeEventListener('scroll', handleGlobalScroll);
 }
 
 function animateGarden() {
@@ -178,28 +197,30 @@ function animateGarden() {
 }
 
 function handleMouseMove(e) {
-  const rect = gardenCanvas.getBoundingClientRect();
-  // Use rect dimensions for accurate mouse position
-  const scaleX = gardenCanvas.width / rect.width;
-  const scaleY = gardenCanvas.height / rect.height;
-  
-  mouseX = (e.clientX - rect.left) * scaleX;
-  mouseY = (e.clientY - rect.top) * scaleY;
+    // Get the canvas position
+    const canvasRect = gardenCanvas.getBoundingClientRect();
+    
+    // Calculate mouse position relative to the canvas
+    mouseX = e.pageX - canvasRect.left;
+    mouseY = e.pageY - canvasRect.top;
 }
 
 function handleCanvasClick(event) {
-  const rect = gardenCanvas.getBoundingClientRect();
-  const mouseX = event.clientX - rect.left;
-  const mouseY = event.clientY - rect.top;
+    // Get the canvas position
+    const canvasRect = gardenCanvas.getBoundingClientRect();
+    
+    // Calculate click position relative to the canvas
+    const clickX = event.pageX - canvasRect.left;
+    const clickY = event.pageY - canvasRect.top;
 
-  butterflies.forEach((butterfly, index) => {
-    const distance = Math.hypot(butterfly.x - mouseX, butterfly.y - mouseY);
-    if (distance < butterfly_config.SIZE) {
-      butterflies.splice(index, 1);
-      caughtButterfliesCount++;
-      updateCaughtButterfliesDisplay();
-    }
-  });
+    butterflies.forEach((butterfly, index) => {
+        const distance = Math.hypot(butterfly.x - clickX, butterfly.y - clickY);
+        if (distance < butterfly_config.SIZE) {
+            butterflies.splice(index, 1);
+            caughtButterfliesCount++;
+            updateCaughtButterfliesDisplay();
+        }
+    });
 }
 
 function updateCaughtButterfliesDisplay() {
@@ -217,19 +238,22 @@ function drawDebugInfo(ctx) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.font = '12px Arial';
         
-        // Draw state and target info
+        // Draw butterfly info
         ctx.fillText(`State: ${butterfly.state}`, butterfly.x + 20, butterfly.y - 20);
         ctx.fillText(`Target: ${butterfly.targetElement?.textContent || 'none'}`, butterfly.x + 20, butterfly.y - 5);
-        
-        // Draw position info
         ctx.fillText(`Pos: (${Math.round(butterfly.x)}, ${Math.round(butterfly.y)})`, butterfly.x + 20, butterfly.y + 10);
         
-        // If there's a target, draw line to target
+        // If there's a target, draw line and target coordinates
         if (butterfly.targetElement) {
             const rect = butterfly.targetElement.getBoundingClientRect();
-            const targetX = rect.left + rect.width/2 + window.scrollX;
-            const targetY = rect.top + rect.height/2 + window.scrollY;
+            // Get canvas position
+            const canvasRect = gardenCanvas.getBoundingClientRect();
             
+            // Calculate target position relative to canvas
+            const targetX = rect.left + rect.width/2 - canvasRect.left;
+            const targetY = rect.top + rect.height/2 - canvasRect.top;
+            
+            // Draw line to target
             ctx.beginPath();
             ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
             ctx.moveTo(butterfly.x, butterfly.y);
@@ -237,12 +261,14 @@ function drawDebugInfo(ctx) {
             ctx.stroke();
             
             // Draw target position
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+            ctx.fillText(`(${Math.round(targetX)}, ${Math.round(targetY)})`, targetX, targetY - 15);
+            
+            // Draw target point
             ctx.beginPath();
-            ctx.arc(targetX, targetY, 5, 0, Math.PI * 2);
+            ctx.arc(targetX, targetY, 3, 0, Math.PI * 2);
             ctx.fill();
         }
-        
         ctx.restore();
     });
 }

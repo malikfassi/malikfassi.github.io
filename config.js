@@ -60,7 +60,7 @@ export const butterfly_config = {
         LEAVING: 'leaving'
     },
     SIZE: 15,
-    MAX_COUNT: 5,
+    MAX_COUNT: 1,
     PEACEFUL_SPEED: 2,
     MAX_SPEED: 5,
     MIN_SPEED: 0.5,
@@ -77,5 +77,6 @@ export const butterfly_config = {
     HOVER_OSCILLATION: {
         AMPLITUDE: 8,
         FREQUENCY: 2000
-    }
+    },
+    EDGE_BUFFER: 50
 };

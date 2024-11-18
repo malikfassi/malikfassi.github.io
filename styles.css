@@ -17,6 +17,8 @@ body {
     padding: var(--spacing-unit);
     max-width: 900px;
     margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
 }
 
 h1, h2, h3 {
@@ -128,20 +130,22 @@ h2 {
 }
 
 #gardenCanvas {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     z-index: 10;
     pointer-events: none;
 }
 
 .important-word {
     transition: color 0.3s ease, font-size 0.3s ease, font-weight 0.3s ease;
-    color: initial; /* Default color */
-    font-size: 1em; /* Default size */
-    font-weight: normal; /* Default weight */
+    color: initial;
+    font-size: 1em;
+    font-weight: normal;
+    position: relative;
+    display: inline-block;
 }
 
 .targeted {
@@ -160,4 +164,22 @@ h2 {
 
 .contact-image:hover {
     transform: scale(1.1);
+}
+
+.word-coordinates {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: rgba(255, 0, 0, 0.8);
+    pointer-events: none;
+    white-space: nowrap;
+    font-family: monospace;
+    display: none; /* Hidden by default */
+}
+
+/* Show coordinates only when both targeted and debug mode are active */
+body.debug-mode .targeted .word-coordinates {
+    display: block;
 }
