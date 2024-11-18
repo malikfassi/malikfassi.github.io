@@ -74,16 +74,46 @@ function handleButterflyFlying(butterfly) {
         const dy = butterfly.targetY - butterfly.y;
         const distance = Math.hypot(dx, dy);
 
-        if (distance > 1) {
-            butterfly.velocity.x += (dx / distance) * 0.5;
-            butterfly.velocity.y += (dy / distance) * 0.5;
+        // Add wandering behavior
+        const time = Date.now() / 1000;
+        const wanderX = Math.sin(time * 2) * 3;
+        const wanderY = Math.cos(time * 1.5) * 2;
+
+        if (distance > 50) {  // Far from target - more wandering
+            // Normalize direction and add wandering
+            const dirX = (dx / distance) + wanderX * 0.5;
+            const dirY = (dy / distance) + wanderY * 0.5;
+            
+            // Gradually adjust velocity
+            butterfly.velocity.x += dirX * 0.1;
+            butterfly.velocity.y += dirY * 0.1;
+            
+            // Limit maximum speed
+            const speed = Math.hypot(butterfly.velocity.x, butterfly.velocity.y);
+            if (speed > butterfly_config.PEACEFUL_SPEED) {
+                butterfly.velocity.x *= butterfly_config.PEACEFUL_SPEED / speed;
+                butterfly.velocity.y *= butterfly_config.PEACEFUL_SPEED / speed;
+            }
+        } else if (distance > 5) {  // Close to target - more precise movement
+            // Slower, more precise approach
+            butterfly.velocity.x += (dx / distance) * 0.05;
+            butterfly.velocity.y += (dy / distance) * 0.05;
         } else {
+            // Reached target
             butterfly.state = butterfly_config.STATES.HOVERING;
             butterfly.hoveringPosition = { 
                 x: butterfly.targetX,
                 y: butterfly.targetY 
             };
             butterfly.hoveringStartTime = Date.now();
+        }
+
+        // Update butterfly angle based on movement direction
+        if (Math.abs(butterfly.velocity.x) > 0.1 || Math.abs(butterfly.velocity.y) > 0.1) {
+            const targetAngle = Math.atan2(butterfly.velocity.y, butterfly.velocity.x);
+            // Smooth angle transition
+            const angleDiff = targetAngle - butterfly.angle;
+            butterfly.angle += angleDiff * 0.1;
         }
     }
 }
@@ -264,17 +294,15 @@ function spawnButterfly() {
 }
 
 export function drawButterfly(ctx, butterfly) {
-  const { x, y, size, angle, color } = butterfly;
+  const { x, y, angle, color } = butterfly;
+  const size = butterfly_config.SIZE; // Use fixed size from config
   const time = Date.now() / 1000;
   const wingFlap = (Math.sin(time * 8) * Math.PI) / 8;
 
   ctx.save();
   
-  // Get the canvas dimensions for proper scaling
-  const canvasWidth = ctx.canvas.width;
-  const canvasHeight = ctx.canvas.height;
-  const scale = Math.min(canvasWidth, canvasHeight) / 1000; // Base scale on smallest dimension
-  const adjustedSize = size * scale;
+  // Fixed pixel size instead of canvas-relative scaling
+  const pixelSize = Math.max(1, Math.floor(size / 4));
 
   // Translate to butterfly position
   ctx.translate(x, y);
@@ -288,10 +316,7 @@ export function drawButterfly(ctx, butterfly) {
     [0, color, color, 0],
   ];
 
-  // Use adjusted size for scaling
-  const pixelSize = Math.max(1, Math.floor(adjustedSize / 4));
-
-  // Draw left wing with adjusted scale
+  // Draw left wing
   ctx.save();
   ctx.rotate(-wingFlap);
   wingPattern.forEach((row, i) => {
@@ -309,7 +334,7 @@ export function drawButterfly(ctx, butterfly) {
   });
   ctx.restore();
 
-  // Draw right wing with adjusted scale
+  // Draw right wing
   ctx.save();
   ctx.rotate(wingFlap);
   wingPattern.forEach((row, i) => {
@@ -327,8 +352,8 @@ export function drawButterfly(ctx, butterfly) {
   });
   ctx.restore();
 
-  // Draw body with adjusted scale
-  ctx.fillStyle = "#6D4C41";
+  // Draw body
+  ctx.fillStyle = "#6D4C41"; // Brown body color
   for (let i = -2; i <= 2; i++) {
     ctx.fillRect(-pixelSize / 2, i * pixelSize, pixelSize, pixelSize);
   }
