@@ -11,3 +11,4 @@ Add more randomness in the butterfly movement. two butterfly should never be syn
 Make it sit on a random spot on the word. 
 
 Make it rotate with the direction of the butterfly, but only when the direction is really changing, not just when it wanders. 
+nice green background with light grass pokemon like ground texture.
