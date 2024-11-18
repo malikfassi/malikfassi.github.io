@@ -1,0 +1,13 @@
+Now make the butterfly get bigger or smaller as if it was flying up and down with his wing flap
+
+Make the butterfly fly towards the edge of the screen the same way its wandering around to the words.
+
+Make the butterfly scared of the mouse
+
+Make me able to catch the butterfly with the mouse if i go fast enough with the mouse. 
+
+Add more randomness in the butterfly movement. two butterfly should never be synced.
+
+Make it sit on a random spot on the word. 
+
+Make it rotate with the direction of the butterfly, but only when the direction is really changing, not just when it wanders. 

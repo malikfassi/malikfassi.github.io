@@ -1,4 +1,5 @@
 import { color_config, butterfly_config, isDebugMode } from "./config.js";
+import { gardenCanvas } from "./garden.js";
 
 export let butterflies = [];
 let butterflySpawnTimeoutId = null;
@@ -11,11 +12,11 @@ function shouldLogPosition(butterfly) {
   return dx > LOG_THRESHOLD || dy > LOG_THRESHOLD;
 }
 
-export function updateButterfly(butterfly, mouseX, mouseY) {
+export function updateButterfly(butterfly, mouseX, mouseY, gardenCanvas) {
     const currentTime = Date.now();
     
     // Handle scroll first
-    handleScroll(butterfly);
+    handleScroll(butterfly, gardenCanvas);
     
     // Update position based on velocity for all states
     butterfly.x += butterfly.velocity.x;
@@ -30,19 +31,19 @@ export function updateButterfly(butterfly, mouseX, mouseY) {
     // Handle different states
     switch (butterfly.state) {
         case butterfly_config.STATES.FLYING:
-            handleButterflyFlying(butterfly);
+            handleButterflyFlying(butterfly, gardenCanvas);
             break;
         case butterfly_config.STATES.HOVERING:
-            handleButterflyHovering(butterfly, currentTime);
+            handleButterflyHovering(butterfly, currentTime, gardenCanvas);
             break;
         case butterfly_config.STATES.SCARED:
-            handleButterflyScared(butterfly, mouseX, mouseY);
+            handleButterflyScared(butterfly, mouseX, mouseY, currentTime, gardenCanvas);
             if (currentTime - butterfly.scaredTime > butterfly_config.SCARED_DURATION) {
                 butterfly.state = butterfly_config.STATES.FLYING;
             }
             break;
         case butterfly_config.STATES.LEAVING:
-            handleButterflyLeaving(butterfly);
+            handleButterflyLeaving(butterfly, gardenCanvas);
             break;
     }
 
@@ -55,9 +56,9 @@ export function updateButterfly(butterfly, mouseX, mouseY) {
     butterfly.lastY = butterfly.y;
 }
 
-function handleButterflyFlying(butterfly) {
+function handleButterflyFlying(butterfly, gardenCanvas) {
     if (!butterfly.targetElement) {
-        const newTarget = findNewTarget();
+        const newTarget = findNewTarget(gardenCanvas);
         if (newTarget) {
             butterfly.targetElement = newTarget;
             newTarget.classList.add("targeted");
@@ -66,7 +67,7 @@ function handleButterflyFlying(butterfly) {
     }
 
     if (butterfly.targetElement) {
-        const targetPosition = getElementPagePosition(butterfly.targetElement);
+        const targetPosition = getElementPagePosition(butterfly.targetElement, gardenCanvas);
         butterfly.targetX = targetPosition.x;
         butterfly.targetY = targetPosition.y;
         
@@ -147,9 +148,9 @@ function handleButterflySpawning(butterfly) {
   }
 }
 
-function handleButterflyHovering(butterfly, currentTime) {
+function handleButterflyHovering(butterfly, currentTime, gardenCanvas) {
     if (butterfly.targetElement && butterfly.hoveringPosition) {
-        const targetPosition = getElementPagePosition(butterfly.targetElement);
+        const targetPosition = getElementPagePosition(butterfly.targetElement, gardenCanvas);
         
         // Update hovering position
         butterfly.hoveringPosition.x = targetPosition.x;
@@ -200,7 +201,7 @@ function handleButterflyHovering(butterfly, currentTime) {
     }
 }
 
-function handleButterflyScared(butterfly, mouseX, mouseY) {
+function handleButterflyScared(butterfly, mouseX, mouseY, currentTime, gardenCanvas) {
     console.log('Butterfly is scared!');
     console.log(`Mouse position: (${mouseX}, ${mouseY})`);
     console.log(`Butterfly position: (${butterfly.x}, ${butterfly.y})`);
@@ -294,19 +295,37 @@ function spawnButterfly() {
 }
 
 export function drawButterfly(ctx, butterfly) {
-  const { x, y, angle, color } = butterfly;
-  const size = butterfly_config.SIZE; // Use fixed size from config
+  const { x, y, angle, color, targetElement } = butterfly;
+  const baseSize = butterfly_config.SIZE;
   const time = Date.now() / 1000;
-  const wingFlap = (Math.sin(time * 8) * Math.PI) / 8;
+  
+  // More subtle wing flap
+  const wingFlap = (Math.sin(time * 6) * Math.PI) / 10;
+  
+  // Calculate distance to target if exists
+  let distanceMultiplier = 1;
+  if (targetElement) {
+    const targetPos = getElementPagePosition(targetElement, gardenCanvas);
+    const distance = Math.hypot(targetPos.x - x, targetPos.y - y);
+    // Gradually reduce size as butterfly gets closer to target
+    // Start reducing size when within 100 pixels
+    if (distance < 100) {
+      distanceMultiplier = 0.8 + (distance / 100) * 0.2; // Size ranges from 80% to 100%
+    }
+  }
+
+  // More subtle size oscillation: 0.95 to 1.05 times the base size
+  const sizeMultiplier = (1 + Math.sin(time * 6) * 0.05) * distanceMultiplier;
+  const size = baseSize * sizeMultiplier;
 
   ctx.save();
   
-  // Fixed pixel size instead of canvas-relative scaling
   const pixelSize = Math.max(1, Math.floor(size / 4));
 
-  // Translate to butterfly position
-  ctx.translate(x, y);
-  ctx.rotate(angle + Math.sin(time) * 0.05);
+  // More subtle vertical movement
+  const verticalBob = Math.sin(time * 6) * 1.5;
+  ctx.translate(x, y + verticalBob);
+  ctx.rotate(angle + Math.sin(time) * 0.03); // Reduced rotation wobble
 
   // Wing pattern using the butterfly's color
   const wingPattern = [
@@ -323,6 +342,8 @@ export function drawButterfly(ctx, butterfly) {
     row.forEach((pixel, j) => {
       if (pixel) {
         ctx.fillStyle = pixel;
+        // Subtle opacity variation
+        ctx.globalAlpha = 0.9 + (sizeMultiplier - 1) * 0.2;
         ctx.fillRect(
           (j - wingPattern[0].length) * pixelSize,
           (i - wingPattern.length / 2) * pixelSize,
@@ -341,6 +362,7 @@ export function drawButterfly(ctx, butterfly) {
     row.forEach((pixel, j) => {
       if (pixel) {
         ctx.fillStyle = pixel;
+        ctx.globalAlpha = 0.9 + (sizeMultiplier - 1) * 0.2;
         ctx.fillRect(
           j * pixelSize,
           (i - wingPattern.length / 2) * pixelSize,
@@ -353,7 +375,8 @@ export function drawButterfly(ctx, butterfly) {
   ctx.restore();
 
   // Draw body
-  ctx.fillStyle = "#6D4C41"; // Brown body color
+  ctx.fillStyle = "#6D4C41";
+  ctx.globalAlpha = 1;
   for (let i = -2; i <= 2; i++) {
     ctx.fillRect(-pixelSize / 2, i * pixelSize, pixelSize, pixelSize);
   }
@@ -362,7 +385,7 @@ export function drawButterfly(ctx, butterfly) {
 }
 
 // Add this function to handle the butterfly leaving the canvas
-function handleButterflyLeaving(butterfly) {
+function handleButterflyLeaving(butterfly, gardenCanvas) {
     console.log('Butterfly is leaving');
     
     // Determine nearest edge and set velocity accordingly
@@ -416,7 +439,7 @@ function handleButterflyLeaving(butterfly) {
 }
 
 // Add this as a separate function to handle scroll properly
-function handleScroll(butterfly) {
+function handleScroll(butterfly, gardenCanvas) {
     if (!butterfly.lastScrollY) {
         butterfly.lastScrollY = window.scrollY;
         butterfly.lastScrollX = window.scrollX;
@@ -432,9 +455,9 @@ function handleScroll(butterfly) {
 
     // Update target position if exists
     if (butterfly.targetElement) {
-        const rect = butterfly.targetElement.getBoundingClientRect();
-        butterfly.targetX = rect.left + rect.width/2 + window.scrollX;
-        butterfly.targetY = rect.top + rect.height/2 + window.scrollY;
+        const targetPosition = getElementPagePosition(butterfly.targetElement, gardenCanvas);
+        butterfly.targetX = targetPosition.x;
+        butterfly.targetY = targetPosition.y;
     }
 
     // Update hovering position if in hovering state
@@ -463,7 +486,7 @@ function handleScroll(butterfly) {
     });
 }
 
-function getElementPagePosition(element) {
+function getElementPagePosition(element, gardenCanvas) {
     const rect = element.getBoundingClientRect();
     const canvasRect = gardenCanvas.getBoundingClientRect();
     
@@ -484,7 +507,7 @@ function getElementPagePosition(element) {
     return position;
 }
 
-function findNewTarget() {
+function findNewTarget(gardenCanvas) {
     // First try to find targets in the current viewport
     const viewportTargets = [...document.querySelectorAll(".important-word:not(.targeted)")].filter(element => {
         const rect = element.getBoundingClientRect();
@@ -528,4 +551,10 @@ function findNewTarget() {
 function toggleDebug() {
     isDebugMode = !isDebugMode;
     document.body.classList.toggle('debug-mode', isDebugMode);
+}
+
+function handleGlobalScroll(gardenCanvas) {
+    butterflies.forEach(butterfly => {
+        handleScroll(butterfly, gardenCanvas);
+    });
 }

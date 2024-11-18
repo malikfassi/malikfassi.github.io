@@ -68,10 +68,10 @@ function initializeGardenElements() {
     }
 
     // Add scroll event listener
-    window.addEventListener('scroll', handleGlobalScroll);
+    window.addEventListener('scroll', () => handleGlobalScroll(gardenCanvas));
 }
 
-function handleGlobalScroll() {
+function handleGlobalScroll(gardenCanvas) {
     butterflies.forEach(butterfly => {
         if (butterfly.targetElement) {
             const rect = butterfly.targetElement.getBoundingClientRect();
@@ -179,21 +179,33 @@ export function deactivateGarden() {
   flowers.length = 0;
   windParticles.length = 0;
 
-  window.removeEventListener('scroll', handleGlobalScroll);
+  window.removeEventListener('scroll', () => handleGlobalScroll(gardenCanvas));
 }
 
 function animateGarden() {
-  if (!isGardenMode) return;
+    if (!isGardenMode) return;
 
-  ctx.clearRect(0, 0, gardenCanvas.width, gardenCanvas.height);
+    const ctx = gardenCanvas.getContext('2d');
+    ctx.clearRect(0, 0, gardenCanvas.width, gardenCanvas.height);
 
-  butterflies.forEach(butterfly => {
-    updateButterfly(butterfly, mouseX, mouseY);
-    drawButterfly(ctx, butterfly);
-  });
+    // Update and draw wind particles
+    updateWindParticles(gardenCanvas);
+    windParticles.forEach(particle => drawWindParticle(ctx, particle));
 
-  drawDebugInfo(ctx);
-  requestAnimationFrame(animateGarden);
+    // Update and draw flowers
+    flowers.forEach(flower => updateFlower(flower, ctx));
+
+    // Update and draw butterflies with canvas reference
+    butterflies.forEach(butterfly => {
+        updateButterfly(butterfly, mouseX, mouseY, gardenCanvas);
+        drawButterfly(ctx, butterfly);
+    });
+
+    if (isDebugMode) {
+        drawDebugInfo(ctx);
+    }
+
+    requestAnimationFrame(animateGarden);
 }
 
 function handleMouseMove(e) {
