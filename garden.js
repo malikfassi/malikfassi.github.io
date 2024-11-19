@@ -12,7 +12,8 @@ import {
   scheduleNextSpawn,
   drawButterfly,
   getRelativeButterflyPosition,
-  setAbsoluteButterflyPosition
+  setAbsoluteButterflyPosition,
+  calculatePredictedPath
 } from "./butterfly.js";
 import { isDebugMode, toggleDebug } from './config.js';
 
@@ -243,16 +244,21 @@ function drawDebugInfo(ctx) {
     if (!isDebugMode) return;
     
     butterflies.forEach(butterfly => {
-        // Calculate positions first
-        const relativePos = getRelativeButterflyPosition(butterfly, gardenCanvas);
         const screenX = butterfly.x;
         const screenY = butterfly.y;
+        
+        // Calculate target position once
+        const targetPos = butterfly.targetElement ? 
+            getElementPagePosition(butterfly.targetElement, gardenCanvas) : 
+            { x: 0, y: 0 };
         
         // Draw background box first
         ctx.save();
         const lines = [
             `State: ${butterfly.state}`,
             `Words Hovered: ${butterfly.wordsHovered || 0}`,
+            `Target: (${butterfly.targetElement ? Math.round(targetPos.x) : 'NaN'}, ${
+                butterfly.targetElement ? Math.round(targetPos.y) : 'NaN'})`,
             `Pos: (${Math.round(screenX)}, ${Math.round(screenY)})`
         ];
         
@@ -265,20 +271,19 @@ function drawDebugInfo(ctx) {
         
         // Calculate box dimensions
         const lineHeight = 15;
-        const padding = 10; // Increased padding
-        const cornerRadius = 8; // Added corner radius
-        ctx.font = '12px Arial';
+        const padding = 10;
+        const cornerRadius = 8;
+        ctx.font = '12px monospace';
         const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
         const boxWidth = maxWidth + (padding * 2);
         const boxHeight = (lines.length * lineHeight) + (padding * 2);
         
-        // Draw rounded rectangle background
+        // Draw debug box background
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.beginPath();
         ctx.roundRect(screenX + 20, screenY - 35, boxWidth, boxHeight, cornerRadius);
         ctx.fill();
         
-        // Draw border
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
         ctx.beginPath();
         ctx.roundRect(screenX + 20, screenY - 35, boxWidth, boxHeight, cornerRadius);
@@ -289,19 +294,44 @@ function drawDebugInfo(ctx) {
         lines.forEach((line, index) => {
             ctx.fillText(line, screenX + 20 + padding, screenY - 35 + padding + (lineHeight * index));
         });
-        
+
         // Draw target line and info if exists
         if (butterfly.targetElement) {
             const targetPos = getElementPagePosition(butterfly.targetElement, gardenCanvas);
             
-            // Draw line to target
+            // NEW: Draw predicted path first
+            const pathPoints = calculatePredictedPath(butterfly, targetPos.x, targetPos.y);
+            
+            ctx.beginPath();
+            ctx.moveTo(butterfly.x, butterfly.y);
+            pathPoints.forEach((point, index) => {
+                ctx.lineTo(point.x, point.y);
+                const opacity = 1 - (index / pathPoints.length);
+                ctx.strokeStyle = `rgba(255, 192, 203, ${opacity * 0.5})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(point.x, point.y);
+            });
+            
+            // Draw prediction points
+            pathPoints.forEach((point, index) => {
+                if (index % 10 === 0) {
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 0, 0, ${1 - (index / pathPoints.length)})`;
+                    ctx.fill();
+                }
+            });
+
+            // Draw existing target line
             ctx.beginPath();
             ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
             ctx.moveTo(screenX, screenY);
             ctx.lineTo(targetPos.x, targetPos.y);
             ctx.stroke();
             
-            // Draw target position with rounded corners
+            // Draw target info box
             const targetText = `Target: (${Math.round(targetPos.x)}, ${Math.round(targetPos.y)})`;
             const targetWidth = ctx.measureText(targetText).width + (padding * 2);
             

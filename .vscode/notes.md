@@ -3,6 +3,8 @@
 - [x] Make the butterfly fly towards the edge of the screen the same way its wandering around to the words.
 
 - [ ] Make the butterfly scared of the mouse
+- [ ] add trailing effect to the butterfly.
+
 
 - [ ] Make me able to catch the butterfly with the mouse if i go fast enough with the mouse. 
 

@@ -57,83 +57,78 @@ export function updateButterfly(butterfly, mouseX, mouseY) {
     butterfly.lastY = butterfly.y;
 }
 
+// Add this helper function to initialize wander offsets
+function initializeWanderOffsets() {
+    return {
+        frequencies: {
+            x: [0.2 + Math.random() * 0.1, 0.4 + Math.random() * 0.2, 0.1 + Math.random() * 0.1],
+            y: [0.3 + Math.random() * 0.1, 0.2 + Math.random() * 0.2, 0.15 + Math.random() * 0.1]
+        },
+        phases: {
+            x: [Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2],
+            y: [Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2]
+        },
+        amplitudes: {
+            x: [0.6, 0.3, 0.1],  // Decreasing influence for higher frequencies
+            y: [0.5, 0.35, 0.15]
+        }
+    };
+}
+
+// Modify butterflyMoveTo to ensure wanderOffsets exists
 function butterflyMoveTo(butterfly, targetX, targetY, speed = butterfly_config.PEACEFUL_SPEED) {
     const time = Date.now() / 1000;
     
-    // Initialize more complex wandering properties if not exists
-    if (!butterfly.wanderOffsets) {
-        butterfly.wanderOffsets = {
-            // Multiple frequencies for more organic movement
-            frequencies: {
-                x: [0.2 + Math.random() * 0.1, 0.4 + Math.random() * 0.2, 0.1 + Math.random() * 0.1],
-                y: [0.3 + Math.random() * 0.1, 0.2 + Math.random() * 0.2, 0.15 + Math.random() * 0.1]
-            },
-            // Phase offsets for each frequency
-            phases: {
-                x: [Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2],
-                y: [Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2]
-            },
-            // Amplitudes for each frequency
-            amplitudes: {
-                x: [0.6, 0.3, 0.1],  // Decreasing influence for higher frequencies
-                y: [0.5, 0.35, 0.15]
-            }
-        };
-    }
-
     // Calculate direction to target
     const dx = targetX - butterfly.x;
     const dy = targetY - butterfly.y;
     const distance = Math.hypot(dx, dy);
 
-    // Complex wandering pattern combining multiple sine waves
-    let wanderX = 0;
-    let wanderY = 0;
+    // Base floating motion (figure-eight pattern)
+    const floatX = Math.sin(time * 0.5 + butterfly.timeOffset) * Math.cos(time * 0.3);
+    const floatY = Math.cos(time * 0.4 + butterfly.timeOffset) * Math.sin(time * 0.6);
 
-    // Add each frequency component
-    for (let i = 0; i < 3; i++) {
-        wanderX += Math.sin(
-            time * butterfly.wanderOffsets.frequencies.x[i] + 
-            butterfly.wanderOffsets.phases.x[i]
-        ) * butterfly.wanderOffsets.amplitudes.x[i];
+    // Vertical bobbing (stronger when further from target)
+    const verticalBob = Math.sin(time * 2 + butterfly.timeOffset) * 
+        Math.min(1.0, distance / 200) * 0.3;
 
-        wanderY += Math.sin(
-            time * butterfly.wanderOffsets.frequencies.y[i] + 
-            butterfly.wanderOffsets.phases.y[i]
-        ) * butterfly.wanderOffsets.amplitudes.y[i];
-    }
-
-    // Add circular motion component
-    const circularMotion = {
-        x: Math.cos(time * 0.5) * Math.sin(time * 0.3) * 0.2,
-        y: Math.sin(time * 0.5) * Math.cos(time * 0.3) * 0.2
+    // Random course corrections
+    const courseCorrection = {
+        x: Math.sin(time * 0.1 + butterfly.timeOffset * 2) * 0.2,
+        y: Math.cos(time * 0.15 + butterfly.timeOffset * 2) * 0.2
     };
 
-    wanderX += circularMotion.x;
-    wanderY += circularMotion.y;
-
-    // Distance-based wandering weight with smooth transition
-    const wanderWeight = Math.min(0.8, (distance / butterfly_config.WANDER.DISTANCE_FACTOR)) * 
-        (0.7 + Math.sin(time * 0.2) * 0.3); // Slightly varying influence
+    // Combine all motion components
+    let totalX = 0;
+    let totalY = 0;
 
     if (distance > 1) {
-        // Smoother target influence
-        const targetInfluence = 1 - (wanderWeight * butterfly_config.WANDER.TARGET_WEIGHT);
-        
-        // Combine direct movement with wandering, using smooth acceleration
-        butterfly.velocity.x += (
-            (dx / distance) * speed * targetInfluence + 
-            wanderX * butterfly_config.WANDER.AMPLITUDE * wanderWeight
-        ) * 0.06;
-        
-        butterfly.velocity.y += (
-            (dy / distance) * speed * targetInfluence + 
-            wanderY * butterfly_config.WANDER.AMPLITUDE * wanderWeight
-        ) * 0.06;
+        // Direct movement towards target (stronger when closer)
+        const targetInfluence = Math.max(0.2, 1 - (distance / 300));
+        totalX += (dx / distance) * speed * targetInfluence;
+        totalY += (dy / distance) * speed * targetInfluence;
+
+        // Add floating motion (stronger when further)
+        const floatInfluence = Math.min(1.0, distance / 200);
+        totalX += floatX * speed * floatInfluence * 0.5;
+        totalY += (floatY + verticalBob) * speed * floatInfluence * 0.5;
+
+        // Add course corrections
+        totalX += courseCorrection.x * speed;
+        totalY += courseCorrection.y * speed;
+
+        // Smooth acceleration
+        butterfly.velocity.x += (totalX - butterfly.velocity.x) * 0.03;
+        butterfly.velocity.y += (totalY - butterfly.velocity.y) * 0.03;
     }
 
-    // Add slight upward bias for more natural movement
-    butterfly.velocity.y += Math.sin(time * 0.2) * 0.01;
+    // Apply velocity with air resistance
+    butterfly.x += butterfly.velocity.x;
+    butterfly.y += butterfly.velocity.y;
+    
+    // More natural deceleration
+    butterfly.velocity.x *= 0.95 + Math.sin(time * 0.8) * 0.02;
+    butterfly.velocity.y *= 0.95 + Math.cos(time * 0.8) * 0.02;
 }
 
 function handleButterflyFlying(butterfly) {
@@ -315,10 +310,12 @@ function spawnButterfly() {
             break;
     }
 
+    // Create the butterfly with initial target
+    const newTarget = findNewTarget();
     const butterfly = {
         x,
         y,
-        size: butterfly_config.SIZE,
+        targetElement: newTarget,  // Add initial target
         color: color_config.PASTEL_COLORS[Math.floor(Math.random() * color_config.PASTEL_COLORS.length)],
         angle: 0,
         velocity: { x: 0, y: 0 },
@@ -326,8 +323,14 @@ function spawnButterfly() {
         wordsHovered: 0,
         lastScrollY: window.scrollY,
         lastScrollX: window.scrollX,
-        timeOffset: Math.random() * 1000
+        timeOffset: Math.random() * 1000,
+        wanderOffsets: initializeWanderOffsets()
     };
+
+    // Mark target as targeted if found
+    if (newTarget) {
+        newTarget.classList.add("targeted");
+    }
 
     butterflies.push(butterfly);
     scheduleNextSpawn();
@@ -457,58 +460,66 @@ export function drawButterfly(ctx, butterfly) {
 
 // Add this function to handle the butterfly leaving the canvas
 function handleButterflyLeaving(butterfly) {
-    // Determine nearest edge and set target point if not set
-    if (!butterfly.leavingTarget) {
-        const distanceToTop = butterfly.y;
-        const distanceToRight = window.innerWidth - butterfly.x;
-        const distanceToBottom = window.innerHeight + window.scrollY - butterfly.y;
-        const distanceToLeft = butterfly.x;
-
-        // Find the nearest edge and set a random point along it
-        const edges = [
-            { name: 'top', distance: distanceToTop, getTarget: () => ({ 
-                x: Math.random() * window.innerWidth, 
-                y: -butterfly_config.SIZE 
-            })},
-            { name: 'right', distance: distanceToRight, getTarget: () => ({ 
-                x: window.innerWidth + butterfly_config.SIZE, 
-                y: Math.random() * window.innerHeight + window.scrollY 
-            })},
-            { name: 'bottom', distance: distanceToBottom, getTarget: () => ({ 
-                x: Math.random() * window.innerWidth, 
-                y: window.innerHeight + butterfly_config.SIZE + window.scrollY 
-            })},
-            { name: 'left', distance: distanceToLeft, getTarget: () => ({ 
-                x: -butterfly_config.SIZE, 
-                y: Math.random() * window.innerHeight + window.scrollY 
-            })}
-        ];
-
-        const nearestEdge = edges.reduce((a, b) => a.distance < b.distance ? a : b);
-        butterfly.leavingTarget = nearestEdge.getTarget();
+    // If no exit target is set, choose one
+    if (!butterfly.targetElement) {
+        // Pick a random edge point as target
+        const edge = {
+            x: 0,
+            y: 0,
+            element: document.createElement('div') // Dummy element for targeting
+        };
+        
+        // Randomly choose which edge to fly towards
+        const side = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+        
+        switch(side) {
+            case 0: // top
+                edge.x = Math.random() * window.innerWidth;
+                edge.y = -50;
+                break;
+            case 1: // right
+                edge.x = window.innerWidth + 50;
+                edge.y = Math.random() * window.innerHeight;
+                break;
+            case 2: // bottom
+                edge.x = Math.random() * window.innerWidth;
+                edge.y = window.innerHeight + 50;
+                break;
+            case 3: // left
+                edge.x = -50;
+                edge.y = Math.random() * window.innerHeight;
+                break;
+        }
+        
+        // Set the position on the dummy element for getElementPagePosition to work
+        edge.element.getBoundingClientRect = () => ({
+            left: edge.x,
+            top: edge.y,
+            width: 1,
+            height: 1,
+            right: edge.x + 1,
+            bottom: edge.y + 1
+        });
+        
+        butterfly.targetElement = edge.element;
+        butterfly.exitPoint = { x: edge.x, y: edge.y };
     }
 
-    // Use common movement function
-    butterflyMoveTo(butterfly, 
-        butterfly.leavingTarget.x, 
-        butterfly.leavingTarget.y, 
-        butterfly_config.LEAVING_SPEED
-    );
+    // Move towards exit point with increased speed
+    const targetPos = butterfly.exitPoint;
+    const distance = Math.hypot(targetPos.x - butterfly.x, targetPos.y - butterfly.y);
 
-    // Check if butterfly has left the screen
-    const margin = butterfly_config.SIZE * 2;
-    const isOffscreen = 
-        butterfly.y < -margin ||
-        butterfly.y > window.innerHeight + margin + window.scrollY ||
-        butterfly.x < -margin ||
-        butterfly.x > window.innerWidth + margin;
-
-    if (isOffscreen) {
+    // Remove butterfly once it's far enough outside the viewport
+    if (distance > butterfly_config.SAFE_DISTANCE) {
         const index = butterflies.indexOf(butterfly);
         if (index > -1) {
             butterflies.splice(index, 1);
         }
+        return;
     }
+
+    // Use normal movement but with higher speed
+    butterflyMoveTo(butterfly, targetPos.x, targetPos.y, butterfly_config.LEAVING_SPEED);
 }
 
 export function getRelativeButterflyPosition(butterfly, gardenCanvas) {
@@ -615,57 +626,46 @@ function handleMouseInteraction(butterfly, mouseX, mouseY) {
     const dy = butterfly.y - mouseY;
     const distanceToMouse = Math.hypot(dx, dy);
     
-    // Check if mouse is within fear radius
+    // Check if mouse is within detection radius
     if (distanceToMouse < butterfly_config.FEAR_RADIUS) {
+        // Set exclamation point visibility
+        butterfly.showExclamation = true;
+        butterfly.exclamationStartTime = Date.now();
+        
         // Switch to scared state if not already scared
         if (butterfly.state !== butterfly_config.STATES.SCARED) {
-            if (butterfly_config.DEBUG) {
-                console.log(`🦋 Butterfly became scared! Distance to mouse: ${Math.round(distanceToMouse)}px`);
-                console.log(`Mouse position: (${Math.round(mouseX)}, ${Math.round(mouseY)})`);
-                console.log(`Butterfly position: (${Math.round(butterfly.x)}, ${Math.round(butterfly.y)})`);
-            }
             butterfly.state = butterfly_config.STATES.SCARED;
             butterfly.scaredStartTime = Date.now();
             
             // Release current target if any
             if (butterfly.targetElement) {
                 butterfly.targetElement.classList.remove("targeted");
-                butterfly.targetElement.style.color = ""; // Reset color
+                butterfly.targetElement.style.color = "";
                 butterfly.targetElement = null;
             }
         }
         
         // Calculate escape direction (away from mouse)
         const escapeAngle = Math.atan2(dy, dx);
-        
-        // Faster escape when closer to mouse
         const escapeSpeed = butterfly_config.ESCAPE_SPEED * 
             (1 - (distanceToMouse / butterfly_config.FEAR_RADIUS));
         
-        // Set butterfly angle to match escape direction
-        butterfly.angle = escapeAngle + Math.PI; // Face away from mouse
-        
-        // Add some erratic panic movement
+        // Add erratic panic movement
         const panicTime = Date.now() / 1000;
-        const panicX = Math.sin(panicTime * butterfly_config.PANIC.FREQUENCY + butterfly.timeOffset) * 
-                      butterfly_config.PANIC.AMPLITUDE;
-        const panicY = Math.cos(panicTime * butterfly_config.PANIC.FREQUENCY + butterfly.timeOffset) * 
-                      butterfly_config.PANIC.AMPLITUDE;
+        const panicX = Math.sin(panicTime * 8 + butterfly.timeOffset) * 2;
+        const panicY = Math.cos(panicTime * 8 + butterfly.timeOffset) * 2;
         
         // Update velocity to escape
         butterfly.velocity.x = Math.cos(escapeAngle) * escapeSpeed + panicX;
         butterfly.velocity.y = Math.sin(escapeAngle) * escapeSpeed + panicY;
         
-        return true; // Indicates butterfly is scared
-    }
-    
-    // Check if scared state should end
-    if (butterfly.state === butterfly_config.STATES.SCARED) {
-        const scaredDuration = Date.now() - butterfly.scaredStartTime;
-        if (scaredDuration > butterfly_config.SCARED_DURATION) {
-            butterfly.state = butterfly_config.STATES.FLYING;
+        return true;
+    } else {
+        // Hide exclamation after delay
+        if (butterfly.showExclamation && 
+            Date.now() - butterfly.exclamationStartTime > 1000) {
+            butterfly.showExclamation = false;
         }
-        return true; // Still in scared state
     }
     
     return false;
@@ -678,4 +678,61 @@ function colorWord(element, butterfly) {
     } else {
         element.style.color = '';
     }
+}
+
+// Export the new function along with existing exports
+export function calculatePredictedPath(butterfly, targetX, targetY, steps = 300) {
+    // Make sure original butterfly has wanderOffsets
+    if (!butterfly.wanderOffsets) {
+        butterfly.wanderOffsets = initializeWanderOffsets();
+    }
+
+    const pathPoints = [];
+    const simulatedButterfly = {
+        ...butterfly,
+        x: butterfly.x,
+        y: butterfly.y,
+        velocity: { 
+            x: butterfly.velocity.x,
+            y: butterfly.velocity.y 
+        },
+        wanderOffsets: JSON.parse(JSON.stringify(butterfly.wanderOffsets)),
+        timeOffset: butterfly.timeOffset,
+        state: butterfly.state
+    };
+
+    // Store original butterfly state
+    const originalState = {
+        x: butterfly.x,
+        y: butterfly.y,
+        velocity: { ...butterfly.velocity }
+    };
+
+    // Simulate future positions
+    for (let i = 0; i < steps; i++) {
+        butterflyMoveTo(
+            simulatedButterfly, 
+            targetX, 
+            targetY, 
+            butterfly_config.PEACEFUL_SPEED,
+            Date.now() / 1000 + (i * 0.05)
+        );
+
+        // Store point
+        pathPoints.push({
+            x: simulatedButterfly.x,
+            y: simulatedButterfly.y
+        });
+
+        // Less damping for longer prediction
+        simulatedButterfly.velocity.x *= 0.995;
+        simulatedButterfly.velocity.y *= 0.995;
+    }
+
+    // Restore original butterfly state
+    butterfly.x = originalState.x;
+    butterfly.y = originalState.y;
+    butterfly.velocity = originalState.velocity;
+
+    return pathPoints;
 }

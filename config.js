@@ -61,9 +61,9 @@ export const butterfly_config = {
     },
     SIZE: 15,
     MAX_COUNT: 10,
-    PEACEFUL_SPEED: 2,
-    MAX_SPEED: 5,
-    MIN_SPEED: 0.5,
+    PEACEFUL_SPEED: 4.5,
+    MAX_SPEED: 8,
+    MIN_SPEED: 1.5,
     SCROLL_ADJUSTMENT_SPEED: 1.5,
     SAFE_DISTANCE: 200,
     INTERACTION_RADIUS: 50,
@@ -71,9 +71,20 @@ export const butterfly_config = {
         MIN_INTERVAL: 100,
         MAX_INTERVAL: 200
     },
-    HOVER_WORDS_BEFORE_LEAVING: 3,
+    HOVER_WORDS_BEFORE_LEAVING: 1,
     LEAVING_SPEED: 3,
-    DEBUG: true,
+    DEBUG: {
+        ENABLED: true,
+        PATH_PREDICTION: {
+            STEPS: 100,         // Number of points to predict
+            STEP_SIZE: 0.1,     // Time step size in seconds
+            DRAW_INTERVAL: 10,  // Draw a point every N steps
+            COLORS: {
+                PATH: 'rgba(255, 192, 203, 0.5)',  // Pink path
+                POINTS: 'rgba(255, 0, 0, 1)'       // Red points
+            }
+        }
+    },
     HOVER_OSCILLATION: {
         AMPLITUDE: 8,
         FREQUENCY: 2000
@@ -81,11 +92,33 @@ export const butterfly_config = {
     EDGE_BUFFER: 50,
     HOVER_THRESHOLD: 15,
     WANDER: {
-        AMPLITUDE: 0.7,         // Overall wandering strength
-        TARGET_WEIGHT: 0.6,     // Balance between wandering and target-seeking
-        DISTANCE_FACTOR: 250,   // How distance affects wandering
+        AMPLITUDE: 1.2,         // Increased from 0.7
+        TARGET_WEIGHT: 0.8,     // Increased from 0.6
+        DISTANCE_FACTOR: 200,   // Decreased from 250 for more dynamic movement
         MIN_SPEED_MULT: 0.8,
-        MAX_SPEED_MULT: 1.1
+        MAX_SPEED_MULT: 1.1,
+        COMPONENTS: {
+            X: [0.2, 0.4, 0.1],  // Base frequencies for X movement
+            Y: [0.3, 0.2, 0.15], // Base frequencies for Y movement
+            VARIANCE: 0.1        // Random variance added to frequencies
+        },
+        FREQUENCIES: {
+            WING_FLAP: 8,      // Wing flapping frequency
+            ALTITUDE: 0.5,      // Altitude change frequency
+            CIRCULAR: {
+                X: 0.8,
+                Y: 0.5
+            }
+        },
+        AMPLITUDES: {
+            WING_FLAP: 0.3,    // Wing flapping amplitude
+            ALTITUDE: 1.2,      // Altitude change amplitude
+            CIRCULAR: 0.4,      // Circular motion amplitude
+            SIZE: {
+                WING: 0.1,     // Size change from wing flaps
+                ALTITUDE: 0.15  // Size change from altitude
+            }
+        }
     },
     PANIC: {
         FREQUENCY: 15,        // Higher frequency for more erratic movement
