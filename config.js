@@ -50,8 +50,8 @@ export const wind_config = {
 };
 
 export const butterfly_config = {
-    FEAR_RADIUS: 150,
-    ESCAPE_SPEED: 6,
+    FEAR_RADIUS: 150, //Smaller radius for more precise fear trigger
+    ESCAPE_SPEED: 8,
     SCARED_DURATION: 1000,
     STATES: {
         FLYING: 'flying',
@@ -60,7 +60,7 @@ export const butterfly_config = {
         LEAVING: 'leaving'
     },
     SIZE: 15,
-    MAX_COUNT: 5,
+    MAX_COUNT: 10,
     PEACEFUL_SPEED: 2,
     MAX_SPEED: 5,
     MIN_SPEED: 0.5,
@@ -72,11 +72,28 @@ export const butterfly_config = {
         MAX_INTERVAL: 200
     },
     HOVER_WORDS_BEFORE_LEAVING: 3,
-    LEAVING_SPEED: 5,
+    LEAVING_SPEED: 3,
     DEBUG: true,
     HOVER_OSCILLATION: {
         AMPLITUDE: 8,
         FREQUENCY: 2000
     },
-    EDGE_BUFFER: 50
+    EDGE_BUFFER: 50,
+    HOVER_THRESHOLD: 15,
+    WANDER: {
+        AMPLITUDE: 0.7,         // Overall wandering strength
+        TARGET_WEIGHT: 0.6,     // Balance between wandering and target-seeking
+        DISTANCE_FACTOR: 250,   // How distance affects wandering
+        MIN_SPEED_MULT: 0.8,
+        MAX_SPEED_MULT: 1.1
+    },
+    PANIC: {
+        FREQUENCY: 15,        // Higher frequency for more erratic movement
+        AMPLITUDE: 1.0        // Larger amplitude for more noticeable panic
+    },
+    HOVER: {
+        MIN_DURATION: 5000,  // 5 seconds minimum
+        MAX_DURATION: 8000,  // 8 seconds maximum
+        TRANSITION_SPEED: 0.1
+    }
 };

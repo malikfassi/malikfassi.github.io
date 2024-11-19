@@ -14,9 +14,9 @@ body {
     color: var(--text-color);
     background-color: var(--background-color);
     margin: 0;
-    padding: var(--spacing-unit);
-    max-width: 900px;
-    margin: 0 auto;
+    padding: 0;
+    overflow-x: hidden;
+    width: 100%;
     min-height: 100vh;
     position: relative;
 }
@@ -136,14 +136,13 @@ h2 {
     width: 100%;
     height: 100%;
     z-index: 10;
-    pointer-events: none;
+    pointer-events: all;
+    margin: 0;
+    padding: 0;
 }
 
 .important-word {
-    transition: color 0.3s ease, font-size 0.3s ease, font-weight 0.3s ease;
     color: initial;
-    font-size: 1em;
-    font-weight: normal;
     position: relative;
     display: inline-block;
 }
@@ -167,8 +166,8 @@ h2 {
 }
 
 .word-coordinates {
-    position: absolute;
-    top: -15px;
+    position: fixed;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     font-size: 10px;
@@ -176,10 +175,37 @@ h2 {
     pointer-events: none;
     white-space: nowrap;
     font-family: monospace;
-    display: none; /* Hidden by default */
+    display: none;
+    z-index: 1000;
 }
 
 /* Show coordinates only when both targeted and debug mode are active */
 body.debug-mode .targeted .word-coordinates {
     display: block;
 }
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;    /* Center the container */
+    padding: 40px 20px;   /* Add padding top/bottom and sides */
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Center text content */
+.container h1,
+.container h2,
+.container h3,
+.container p,
+.container section {
+    max-width: 800px;     /* Limit content width for better readability */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Adjust spacing between sections */
+.container section {
+    margin-bottom: 40px;
+}
+
