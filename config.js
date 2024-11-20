@@ -73,7 +73,7 @@ export const butterfly_config = {
         LEAVING: 'LEAVING'
     },
     SIZE: 15,
-    MAX_COUNT: 15,
+    MAX_COUNT: 40,
     PEACEFUL_SPEED: 3,
     MAX_SPEED: 5,
     MIN_SPEED: 0.5,

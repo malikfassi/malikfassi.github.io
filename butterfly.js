@@ -135,33 +135,46 @@ function handleButterflyFlying(butterfly) {
         if (newTarget) {
             butterfly.targetElement = newTarget;
             newTarget.classList.add("targeted");
-            if (butterfly_config.DEBUG) {
-                console.log(`New target assigned: ${newTarget.textContent}`);
-            }
         }
     }
 
     if (butterfly.targetElement) {
+        const rect = butterfly.targetElement.getBoundingClientRect();
+        const canvasRect = gardenCanvas.getBoundingClientRect();
+        
+        // Get target position first
         const targetPos = getElementPagePosition(butterfly.targetElement, gardenCanvas);
+        
         // Calculate distance to target
         const dx = targetPos.x - butterfly.x;
         const dy = targetPos.y - butterfly.y;
         const distance = Math.hypot(dx, dy);
-
+        
+        // Now we can check distance and set hover position if needed
+        if (!butterfly.hoveringPosition && distance < butterfly_config.HOVER_THRESHOLD) {
+            // Random position within the word boundaries
+            const randomX = rect.left + (Math.random() * rect.width);
+            const randomY = rect.top + (Math.random() * rect.height);
+            
+            butterfly.hoveringPosition = {
+                x: randomX + window.scrollX,
+                y: randomY + window.scrollY
+            };
+        }
+        
+        // Get final target position (either random hover position or word position)
+        const finalTargetPos = butterfly.hoveringPosition || targetPos;
+        
         // Move towards target
-        butterflyMoveTo(butterfly, targetPos.x, targetPos.y);
+        butterflyMoveTo(butterfly, finalTargetPos.x, finalTargetPos.y);
 
         // Check if close enough to start hovering
         if (distance < butterfly_config.HOVER_THRESHOLD) {
             butterfly.state = butterfly_config.STATES.HOVERING;
-            butterfly.hoveringPosition = { ...targetPos };
             butterfly.hoveringStartTime = Date.now();
             butterfly.currentHoverDuration = 
                 butterfly_config.HOVER.MIN_DURATION + 
                 Math.random() * (butterfly_config.HOVER.MAX_DURATION - butterfly_config.HOVER.MIN_DURATION);
-            if (butterfly_config.DEBUG) {
-                console.log('Butterfly started hovering', { distance, threshold: butterfly_config.HOVER_THRESHOLD });
-            }
         }
     }
 }
@@ -333,122 +346,160 @@ function spawnButterfly() {
 export { spawnButterfly, scheduleNextSpawn };
 
 export function drawButterfly(ctx, butterfly) {
-  const { x, y, angle, color, state } = butterfly;
-  const baseSize = butterfly_config.SIZE;
-  const time = Date.now() / 1000 + (butterfly.timeOffset || 0);
-  
-  // Different oscillation amplitudes based on state
-  let sizeMultiplier;
-  switch(state) {
-    case butterfly_config.STATES.FLYING:
-      // Larger oscillation during flight (20% size variation)
-      sizeMultiplier = 1 + Math.sin(time * 6) * 0.2;
-      break;
-    case butterfly_config.STATES.HOVERING:
-      // Smaller oscillation while hovering (10% size variation)
-      sizeMultiplier = 1 + Math.sin(time * 4) * 0.1;
-      break;
-    case butterfly_config.STATES.SCARED:
-      // Rapid, large oscillation when scared (30% size variation)
-      sizeMultiplier = 1 + Math.sin(time * 8) * 0.3;
-      break;
-    default:
-      sizeMultiplier = 1;
-  }
-  
-  const size = baseSize * sizeMultiplier;
-  
-  ctx.save();
-  
-  // Add slight vertical movement synchronized with size
-  const verticalBob = Math.sin(time * (state === butterfly_config.STATES.HOVERING ? 4 : 6)) * 2;
-  ctx.translate(x, y + verticalBob);
-  ctx.rotate(angle + Math.sin(time) * 0.05);
-
-  // Wing pattern using the butterfly's color
-  const wingPattern = [
-    [0, color, color, 0],
-    [color, color, color, color],
-    [color, color, color, color],
-    [0, color, color, 0],
-  ];
-
-  const pixelSize = Math.max(1, Math.floor(size / 4));
-
-  // Wing flap speed also varies by state
-  const wingFlapSpeed = state === butterfly_config.STATES.HOVERING ? 4 : 6;
-  const wingFlap = (Math.sin(time * wingFlapSpeed) * Math.PI) / 8;
-
-  // Draw left wing
-  ctx.save();
-  ctx.rotate(-wingFlap);
-  wingPattern.forEach((row, i) => {
-    row.forEach((pixel, j) => {
-      if (pixel) {
-        ctx.fillStyle = pixel;
-        // Add slight transparency based on size to enhance depth effect
-        ctx.globalAlpha = 0.8 + (sizeMultiplier - 1) * 0.5;
-        ctx.fillRect(
-          (j - wingPattern[0].length) * pixelSize,
-          (i - wingPattern.length / 2) * pixelSize,
-          pixelSize,
-          pixelSize
-        );
-      }
-    });
-  });
-  ctx.restore();
-
-  // Draw right wing
-  ctx.save();
-  ctx.rotate(wingFlap);
-  wingPattern.forEach((row, i) => {
-    row.forEach((pixel, j) => {
-      if (pixel) {
-        ctx.fillStyle = pixel;
-        ctx.globalAlpha = 0.8 + (sizeMultiplier - 1) * 0.5;
-        ctx.fillRect(
-          j * pixelSize,
-          (i - wingPattern.length / 2) * pixelSize,
-          pixelSize,
-          pixelSize
-        );
-      }
-    });
-  });
-  ctx.restore();
-
-  // Draw body
-  ctx.fillStyle = "#6D4C41";
-  ctx.globalAlpha = 1;
-  for (let i = -2; i <= 2; i++) {
-    ctx.fillRect(-pixelSize / 2, i * pixelSize, pixelSize, pixelSize);
-  }
-
-  // Draw scared reaction if butterfly is in scared state
-  if (butterfly.state === butterfly_config.STATES.SCARED) {
-    ctx.font = 'bold 20px Arial';
-    ctx.fillStyle = 'black';
+    ctx.save();
     
-    // Calculate positions for multiple apostrophes in an arc
-    const radius = butterfly_config.SIZE * 1.5;
-    for (let i = 0; i < 3; i++) {
-        const angle = -Math.PI/4 - (i * Math.PI/6); // Spread apostrophes in an arc
-        const x = butterfly.x + Math.cos(angle) * radius;
-        const y = butterfly.y + Math.sin(angle) * radius;
-        
-        // Alternate between ! and '
-        const symbol = i % 2 === 0 ? '!' : "'";
-        
-        // Add some randomness to the position
-        const offsetX = Math.sin(Date.now() / 100 + i) * 2;
-        const offsetY = Math.cos(Date.now() / 100 + i) * 2;
-        
-        ctx.fillText(symbol, x + offsetX, y + offsetY);
+    // Get relative position for drawing
+    const relativePos = getRelativeButterflyPosition(butterfly, gardenCanvas);
+    
+    const { x, y, angle, color, state } = butterfly;
+    const baseSize = butterfly_config.SIZE;
+    const time = Date.now() / 1000 + (butterfly.timeOffset || 0);
+    
+    // Different oscillation amplitudes based on state
+    let sizeMultiplier;
+    switch(state) {
+        case butterfly_config.STATES.FLYING:
+            // Larger oscillation during flight (20% size variation)
+            sizeMultiplier = 1 + Math.sin(time * 6) * 0.2;
+            break;
+        case butterfly_config.STATES.HOVERING:
+            // Smaller oscillation while hovering (10% size variation)
+            sizeMultiplier = 1 + Math.sin(time * 4) * 0.1;
+            break;
+        case butterfly_config.STATES.SCARED:
+            // Rapid, large oscillation when scared (30% size variation)
+            sizeMultiplier = 1 + Math.sin(time * 8) * 0.2;
+            break;
+        default:
+            sizeMultiplier = 1;
     }
-  }
-  
-  ctx.restore();
+    
+    const size = baseSize * sizeMultiplier;
+    
+    ctx.save();
+    
+    // Add slight vertical movement synchronized with size
+    const verticalBob = Math.sin(time * (state === butterfly_config.STATES.HOVERING ? 4 : 6)) * 2;
+    ctx.translate(x, y + verticalBob);
+    ctx.rotate(angle + Math.sin(time) * 0.05);
+
+    // Wing pattern using the butterfly's color
+    const wingPattern = [
+        [0, color, color, 0],
+        [color, color, color, color],
+        [color, color, color, color],
+        [0, color, color, 0],
+    ];
+
+    const pixelSize = Math.max(1, Math.floor(size / 4));
+
+    // Wing flap speed also varies by state
+    const wingFlapSpeed = state === butterfly_config.STATES.HOVERING ? 4 : 6;
+    const wingFlap = (Math.sin(time * wingFlapSpeed) * Math.PI) / 8;
+
+    // Draw left wing
+    ctx.save();
+    ctx.rotate(-wingFlap);
+    wingPattern.forEach((row, i) => {
+        row.forEach((pixel, j) => {
+            if (pixel) {
+                ctx.fillStyle = pixel;
+                // Add slight transparency based on size to enhance depth effect
+                ctx.globalAlpha = 0.8 + (sizeMultiplier - 1) * 0.5;
+                ctx.fillRect(
+                    (j - wingPattern[0].length) * pixelSize,
+                    (i - wingPattern.length / 2) * pixelSize,
+                    pixelSize,
+                    pixelSize
+                );
+            }
+        });
+    });
+    ctx.restore();
+
+    // Draw right wing
+    ctx.save();
+    ctx.rotate(wingFlap);
+    wingPattern.forEach((row, i) => {
+        row.forEach((pixel, j) => {
+            if (pixel) {
+                ctx.fillStyle = pixel;
+                ctx.globalAlpha = 0.8 + (sizeMultiplier - 1) * 0.5;
+                ctx.fillRect(
+                    j * pixelSize,
+                    (i - wingPattern.length / 2) * pixelSize,
+                    pixelSize,
+                    pixelSize
+                );
+            }
+        });
+    });
+    ctx.restore();
+
+    // Draw body
+    ctx.fillStyle = "#6D4C41";
+    ctx.globalAlpha = 1;
+    for (let i = -2; i <= 2; i++) {
+        ctx.fillRect(-pixelSize / 2, i * pixelSize, pixelSize, pixelSize);
+    }
+
+        // Draw scared symbol if butterfly is scared
+        if (butterfly.state === butterfly_config.STATES.SCARED && butterfly.scaredSymbol) {
+            // Comic style font
+            ctx.font = 'bold 16px Comic Sans MS, cursive';
+            
+            // Flash effect with softer red
+            const flashSpeed = 0.015;
+            const flashIntensity = Math.sin(Date.now() * flashSpeed);
+            
+            if (flashIntensity > 0) {
+                ctx.fillStyle = '#ff6b6b';
+                ctx.strokeStyle = 'white';
+            } else {
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = '#ff6b6b';
+            }
+            ctx.lineWidth = 3;
+            
+            // Position symbol in manga style (top-right of the head)
+            const symbolOffsetX = butterfly_config.SIZE * 0.8; // Right of the butterfly
+            const symbolOffsetY = -butterfly_config.SIZE * 1; // Above the butterfly
+            
+            // Add simple bounce effect
+            const bounce = Math.sin(Date.now() * 0.008) * 3;
+            
+            // Draw text with outline
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.strokeText(butterfly.scaredSymbol, symbolOffsetX, symbolOffsetY + bounce);
+            ctx.fillText(butterfly.scaredSymbol, symbolOffsetX, symbolOffsetY + bounce);
+        }
+        
+        ctx.restore();
+    
+    // Modify butterfly appearance when scared
+    if (butterfly.state === butterfly_config.STATES.SCARED) {
+        // Flash effect
+        const flashSpeed = 0.01;
+        const flashIntensity = Math.abs(Math.sin(Date.now() * flashSpeed));
+        
+        // Mix between butterfly's base color and red based on flash intensity
+        const baseColor = butterfly.color;
+        const r = parseInt(baseColor.slice(1,3), 16);
+        const g = parseInt(baseColor.slice(3,5), 16);
+        const b = parseInt(baseColor.slice(5,7), 16);
+        
+        // More red during flash peaks
+        const redTint = 0.6 * flashIntensity;
+        const newR = Math.min(255, r + (255 - r) * redTint);
+        const newG = Math.max(0, g - g * redTint * 0.5);
+        const newB = Math.max(0, b - b * redTint * 0.5);
+        
+        ctx.fillStyle = `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`;
+    }
+    
+    // Final restore for the entire butterfly
+    ctx.restore();
 }
 
 // Add this function to handle the butterfly leaving the canvas
@@ -558,42 +609,14 @@ function handleScroll(butterfly) {
 }
 
 function findNewTarget() {
-    // First try to find targets in the current viewport
-    const viewportTargets = [...document.querySelectorAll(".important-word:not(.targeted)")].filter(element => {
-        const rect = element.getBoundingClientRect();
-        const canvasRect = gardenCanvas.getBoundingClientRect();
-        
-        // Calculate and store coordinates
-        const x = rect.left + rect.width/2 - canvasRect.left;
-        const y = rect.top + rect.height/2 - canvasRect.top;
-        
-        // Update data attributes
-        element.setAttribute('data-x', Math.round(x));
-        element.setAttribute('data-y', Math.round(y));
-        
-        // Add coordinate display span if not exists
-        if (!element.querySelector('.word-coordinates')) {
-            const coordSpan = document.createElement('span');
-            coordSpan.className = 'word-coordinates';
-            coordSpan.style.cssText = 'position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: red;';
-            element.style.position = 'relative';
-            coordSpan.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
-            element.appendChild(coordSpan);
-        }
-        
-        return rect.top >= 0 && rect.bottom <= window.innerHeight;
-    });
-
-    // Rest of the function remains the same
-    const allTargets = viewportTargets.length > 0 ? 
-        viewportTargets : 
-        [...document.querySelectorAll(".important-word:not(.targeted)")];
-
+    // Get all important words, regardless of viewport visibility
+    const allTargets = [...document.querySelectorAll(".important-word:not(.targeted)")];
+    
     if (allTargets.length > 0) {
         const target = allTargets[Math.floor(Math.random() * allTargets.length)];
         return target;
     }
-
+    
     return null;
 }
 
@@ -604,34 +627,26 @@ function toggleDebug() {
 }
 
 function handleMouseInteraction(butterfly, mouseX, mouseY) {
-    // Calculate distance to mouse
+    // Track mouse movement
+    if (!butterfly.lastMouseX) {
+        butterfly.lastMouseX = mouseX;
+        butterfly.lastMouseY = mouseY;
+        return false;
+    }
+
+    const mouseMovement = Math.hypot(mouseX - butterfly.lastMouseX, mouseY - butterfly.lastMouseY);
+    const isMouseMoving = mouseMovement > 2;
+
+    butterfly.lastMouseX = mouseX;
+    butterfly.lastMouseY = mouseY;
+
     const dx = butterfly.x - mouseX;
     const dy = butterfly.y - mouseY;
     const distanceToMouse = Math.hypot(dx, dy);
     
-    // Check if mouse is within fear radius
-    if (distanceToMouse < butterfly_config.FEAR_RADIUS) {
-        // Calculate how scared the butterfly is (1 when very close, 0 when at fear radius)
-        const fearIntensity = Math.pow(1 - (distanceToMouse / butterfly_config.FEAR_RADIUS), 2);
-        
-        // Calculate escape direction (away from mouse)
-        const escapeAngle = Math.atan2(dy, dx);
-        
-        // Calculate target escape velocity
-        const targetVelocityX = Math.cos(escapeAngle) * butterfly_config.ESCAPE_SPEED * fearIntensity;
-        const targetVelocityY = Math.sin(escapeAngle) * butterfly_config.ESCAPE_SPEED * fearIntensity;
-        
-        // Gradually adjust current velocity towards target (smoother acceleration)
-        butterfly.velocity.x += (targetVelocityX - butterfly.velocity.x) * 0.2;
-        butterfly.velocity.y += (targetVelocityY - butterfly.velocity.y) * 0.2;
-        
-        // Add slight sideways movement to make it more natural
-        const sideAngle = escapeAngle + Math.PI/2;
-        const sideMovement = Math.sin(Date.now() * 0.005) * fearIntensity * 0.5;
-        butterfly.velocity.x += Math.cos(sideAngle) * sideMovement;
-        butterfly.velocity.y += Math.sin(sideAngle) * sideMovement;
-        
-        // Set state to scared if not already
+    // Check if we're in scared state or should enter it
+    if (distanceToMouse < butterfly_config.FEAR_RADIUS && isMouseMoving) {
+        // Enter scared state if not already scared
         if (butterfly.state !== butterfly_config.STATES.SCARED) {
             butterfly.state = butterfly_config.STATES.SCARED;
             butterfly.scaredStartTime = Date.now();
@@ -641,22 +656,85 @@ function handleMouseInteraction(butterfly, mouseX, mouseY) {
                 butterfly.targetElement.style.color = "";
                 butterfly.targetElement = null;
             }
+            
+            butterfly.scaredSymbol = ['!', '?', '*', '!!'][Math.floor(Math.random() * 4)];
         }
+        
+        const normalizedDx = dx / distanceToMouse;
+        const normalizedDy = dy / distanceToMouse;
+        
+        const fearIntensity = Math.pow(1 - (distanceToMouse / butterfly_config.FEAR_RADIUS), 1.5) * 0.7;
+        const escapeSpeed = butterfly_config.ESCAPE_SPEED * (0.5 + fearIntensity);
+        
+        butterfly.velocity.x = normalizedDx * escapeSpeed;
+        butterfly.velocity.y = normalizedDy * escapeSpeed;
         
         return true;
     }
     
-    // Gradually return to normal state when far enough
+    // Check if we should exit scared state
     if (butterfly.state === butterfly_config.STATES.SCARED) {
         const scaredDuration = Date.now() - butterfly.scaredStartTime;
-        if (scaredDuration > butterfly_config.SCARED_DURATION && 
-            distanceToMouse > butterfly_config.FEAR_RADIUS * 1.2) {
+        const minScaredDuration = 1500; // Minimum 1.5 seconds of being scared
+        
+        if (scaredDuration > minScaredDuration && 
+            (distanceToMouse > butterfly_config.FEAR_RADIUS * 1.1 || !isMouseMoving)) {
             butterfly.state = butterfly_config.STATES.FLYING;
         }
-        return true;
     }
     
     return false;
+}
+
+function calculateSafePath(butterfly, targetPos, mouseX, mouseY) {
+    // Calculate direct path to target
+    const dx = targetPos.x - butterfly.x;
+    const dy = targetPos.y - butterfly.y;
+    const directAngle = Math.atan2(dy, dx);
+    
+    // Calculate angle to mouse
+    const mouseAngle = Math.atan2(butterfly.y - mouseY, butterfly.x - mouseX);
+    
+    // If mouse is between butterfly and target, calculate detour
+    const angleDiff = Math.abs(directAngle - mouseAngle);
+    if (angleDiff < Math.PI * 0.5) {
+        // Add deviation to avoid mouse
+        const detourAngle = directAngle + (Math.PI * 0.3 * Math.sign(Math.sin(mouseAngle)));
+        return {
+            x: Math.cos(detourAngle) * butterfly_config.NORMAL_SPEED,
+            y: Math.sin(detourAngle) * butterfly_config.NORMAL_SPEED
+        };
+    }
+    
+    // Otherwise proceed directly to target
+    return {
+        x: dx * 0.1,
+        y: dy * 0.1
+    };
+}
+
+function findSafeTarget(butterfly, mouseX, mouseY) {
+    const allTargets = [...document.querySelectorAll(".important-word:not(.targeted)")];
+    if (allTargets.length === 0) return;
+    
+    // Score targets based on distance from mouse and current position
+    const scoredTargets = allTargets.map(target => {
+        const pos = getElementPagePosition(target, gardenCanvas);
+        const distanceToMouse = Math.hypot(pos.x - mouseX, pos.y - mouseY);
+        const distanceToButterfly = Math.hypot(pos.x - butterfly.x, pos.y - butterfly.y);
+        
+        return {
+            target,
+            score: distanceToMouse - distanceToButterfly * 0.5 // Prefer targets far from mouse
+        };
+    });
+    
+    // Choose one of the top 3 safest targets randomly
+    scoredTargets.sort((a, b) => b.score - a.score);
+    const safeTarget = scoredTargets[Math.floor(Math.random() * Math.min(3, scoredTargets.length))].target;
+    
+    butterfly.targetElement = safeTarget;
+    safeTarget.classList.add("targeted");
 }
 
 function colorWord(element, butterfly) {
@@ -666,4 +744,17 @@ function colorWord(element, butterfly) {
     } else {
         element.style.color = '';
     }
+}
+
+// Helper function to add red tint
+function adjustColorToRed(baseColor, intensity) {
+    const r = parseInt(baseColor.slice(1,3), 16);
+    const g = parseInt(baseColor.slice(3,5), 16);
+    const b = parseInt(baseColor.slice(5,7), 16);
+    
+    const newR = Math.min(255, r + (255 - r) * intensity);
+    const newG = Math.max(0, g - g * intensity * 0.5);
+    const newB = Math.max(0, b - b * intensity * 0.5);
+    
+    return `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`;
 }

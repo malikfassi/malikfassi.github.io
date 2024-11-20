@@ -126,55 +126,57 @@ const observer = new ResizeObserver(() => {
 observer.observe(document.body);
 
 export function activateGarden() {
-  isGardenMode = true;
-  if (!gardenCanvas) {
+    isGardenMode = true;
+    
+    // Get canvas element
     gardenCanvas = document.getElementById("gardenCanvas");
-  }
-
-  if (!gardenCanvas) {
-    console.error("Garden canvas not found in the DOM");
-    return;
-  }
-
-  gardenCanvas.style.display = "block";
-  ctx = gardenCanvas.getContext("2d");
-
-  // Initialize canvas size properly
-  handleCanvasResize();
-
-  // Add event listeners for interaction
-  gardenCanvas.addEventListener("click", handleCanvasClick); // Add click event for catching butterflies
-  gardenCanvas.addEventListener("mousemove", handleMouseMove);
-  console.log('mousemove added');
-
-  // Start the animation loop
-  requestAnimationFrame(animateGarden);
-
-  // Schedule the first butterfly spawn
-  scheduleNextSpawn();
+    
+    if (!gardenCanvas) {
+        console.error("Garden canvas not found!");
+        return;
+    }
+    
+    // Initialize canvas
+    gardenCanvas.style.display = "block";
+    ctx = gardenCanvas.getContext("2d");
+    
+    // Set up canvas size
+    handleCanvasResize();
+    
+    // Add all event listeners here where we know canvas exists
+    window.addEventListener('scroll', updateWordCoordinate);
+    window.addEventListener('resize', updateWordCoordinate);
+    gardenCanvas.addEventListener('mousemove', handleMouseMove);
+    gardenCanvas.addEventListener('click', handleCanvasClick);
+    
+    // Start periodic coordinate updates
+    setInterval(updateWordCoordinate, 100);
+    
+    // Start animation loop
+    requestAnimationFrame(draw);
+    
+    // Start spawning butterflies
+    scheduleNextSpawn();
 }
 
 export function deactivateGarden() {
-  isGardenMode = false;
-  if (gardenCanvas) {
-    gardenCanvas.style.display = "none";
-    gardenCanvas.style.pointerEvents = "none";
-    gardenCanvas.removeEventListener("click", plantSeed);
-    gardenCanvas.removeEventListener("mousemove", handleMouseMove);
-  }
-
-  document.body.style.backgroundColor = "";
-
-  if (butterflySpawnTimeoutId) {
-    clearTimeout(butterflySpawnTimeoutId);
-    butterflySpawnTimeoutId = null;
-  }
-
-  butterflies.length = 0;
-  flowers.length = 0;
-  windParticles.length = 0;
-
-  window.removeEventListener('scroll', () => handleGlobalScroll(gardenCanvas));
+    isGardenMode = false;
+    
+    // Remove event listeners
+    window.removeEventListener('scroll', updateWordCoordinate);
+    window.removeEventListener('resize', updateWordCoordinate);
+    if (gardenCanvas) {
+        gardenCanvas.removeEventListener('mousemove', handleMouseMove);
+        gardenCanvas.removeEventListener('click', handleCanvasClick);
+    }
+    
+    // Clear any intervals or timeouts
+    clearInterval(updateWordCoordinate);
+    
+    // Clear canvas if it exists
+    if (gardenCanvas && ctx) {
+        ctx.clearRect(0, 0, gardenCanvas.width, gardenCanvas.height);
+    }
 }
 
 function animateGarden() {
@@ -315,7 +317,7 @@ function drawDebugInfo(ctx, mouseX, mouseY) {
         const lines = [
             `State: ${butterfly.state}`,
             `Words Hovered: ${butterfly.wordsHovered || 0}`,
-            `Target word: ${butterfly.targetElement.textContent}`,
+            `Target word: ${butterfly.targetElement?.textContent}`,
             `Pos: (${Math.round(screenX)}, ${Math.round(screenY)})`
         ];
         
@@ -432,16 +434,6 @@ function updateWordCoordinate(element) {
     
     coordElement.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
 }
-
-// Add event listeners for coordinate updates
-window.addEventListener('scroll', updateWordCoordinate);
-window.addEventListener('resize', updateWordCoordinate);
-
-// Update coordinates periodically to handle dynamic content changes
-setInterval(updateWordCoordinate, 100);
-
-// Add event listener to track mouse position
-gardenCanvas.addEventListener('mousemove', handleMouseMove);
 
 // Modify the draw function to pass mouse coordinates
 function draw() {
