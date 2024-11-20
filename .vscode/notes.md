@@ -2,7 +2,7 @@
 
 - [x] Make the butterfly fly towards the edge of the screen the same way its wandering around to the words.
 
-- [ ] Make the butterfly scared of the mouse
+- [x] Make the butterfly scared of the mouse
 
 - [ ] Make me able to catch the butterfly with the mouse if i go fast enough with the mouse. 
 

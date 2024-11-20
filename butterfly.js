@@ -16,6 +16,10 @@ function shouldLogPosition(butterfly) {
 export function updateButterfly(butterfly, mouseX, mouseY) {
     const currentTime = Date.now();
     
+    // Store previous position for direction calculation
+    const prevX = butterfly.x;
+    const prevY = butterfly.y;
+    
     // Handle scroll first
     handleScroll(butterfly);
     
@@ -37,19 +41,35 @@ export function updateButterfly(butterfly, mouseX, mouseY) {
         }
     }
 
-    // Update position based on velocity (always do this)
+    // Update position based on velocity
     butterfly.x += butterfly.velocity.x;
     butterfly.y += butterfly.velocity.y;
+
+    // Calculate movement direction and update angle
+    const dx = butterfly.x - prevX;
+    const dy = butterfly.y - prevY;
+    const movement = Math.hypot(dx, dy);
+    
+    // Only update angle if there's significant movement
+    if (movement > 0.1) {
+        // Add 90 degrees (PI/2) to make butterfly perpendicular to movement
+        const targetAngle = Math.atan2(dy, dx) + Math.PI/2;
+        
+        // Smoothly interpolate to the target angle
+        let angleDiff = targetAngle - butterfly.angle;
+        
+        // Normalize angle difference to [-PI, PI]
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        
+        // Smooth rotation (adjust 0.1 for faster/slower rotation)
+        butterfly.angle += angleDiff * 0.1;
+    }
 
     // Apply friction
     butterfly.velocity.x *= 0.98;
     butterfly.velocity.y *= 0.98;
 
-    if (isDebugMode) {
-        console.log(`Words hovered: ${butterfly.wordsHovered}`);
-        console.log(`Position changed from (${butterfly.lastX}, ${butterfly.lastY}) to (${butterfly.x}, ${butterfly.y})`);
-    }
-    
     butterfly.lastX = butterfly.x;
     butterfly.lastY = butterfly.y;
 }
