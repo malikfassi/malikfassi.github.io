@@ -6,27 +6,27 @@ export function toggleDebug() {
 
 export const color_config = {
     BUTTERFLY_COLORS: [
-        // Deeper Pastels with good contrast
-        '#7C4DFF',  // Deep Lavender
-        '#6200EA',  // Deep Purple
-        '#2962FF',  // Deep Blue
-        '#00838F',  // Deep Cyan
-        '#00695C',  // Deep Teal
-        '#2E7D32',  // Deep Green
-        '#827717',  // Deep Lime
-        '#FF6D00',  // Deep Orange
-        '#D84315',  // Deep Orange-Red
-        '#C62828',  // Deep Red
-        '#AD1457',  // Deep Pink
-        '#6A1B9A',  // Deep Purple-Pink
-        '#4527A0',  // Deep Indigo
-        '#283593',  // Deep Royal Blue
-        '#1565C0',  // Deep Sky Blue
-        '#00695C',  // Deep Ocean Green
-        '#2E7D32',  // Deep Forest Green
-        '#BF360C',  // Deep Burnt Orange
-        '#8E24AA',  // Deep Magenta
-        '#5E35B1'   // Deep Violet
+        // Cute, contrasted pastels
+        '#FF99B4',  // Baby Pink
+        '#94D8E5',  // Sky Blue
+        '#D5A6E6',  // Sweet Lavender
+        '#FFB182',  // Soft Peach
+        '#82C7FF',  // Clear Blue
+        '#B8E6B8',  // Mint Leaf
+        '#FFB5A6',  // Coral Pink
+        '#C5B3FF',  // Periwinkle
+        '#FFA6D1',  // Cotton Candy
+        '#A6E6A6',  // Fresh Green
+        '#A6D9D9',  // Ocean Mist
+        '#FFB2CC',  // Rose Petal
+        '#A6E6D9',  // Seafoam
+        '#D1B3FF',  // Lilac Dream
+        '#FFB999',  // Apricot
+        '#B8E6A6',  // Spring Green
+        '#E6B3E6',  // Orchid Bloom
+        '#FFB2B2',  // Strawberry Milk
+        '#CCE6A6',  // Lime Sorbet
+        '#E6B3FF'   // Sweet Mauve
     ],
     DEBUG: {
         TEXT: 'rgba(0, 0, 0, 0.8)',
@@ -63,14 +63,14 @@ export const wind_config = {
 };
 
 export const butterfly_config = {
-    FEAR_RADIUS: 150, //Smaller radius for more precise fear trigger
+    FEAR_RADIUS: 200,
     ESCAPE_SPEED: 8,
-    SCARED_DURATION: 1000,
+    SCARED_DURATION: 500,
     STATES: {
-        FLYING: 'flying',
-        HOVERING: 'hovering',
-        SCARED: 'scared',
-        LEAVING: 'leaving'
+        FLYING: 'FLYING',
+        HOVERING: 'HOVERING',
+        SCARED: 'SCARED',
+        LEAVING: 'LEAVING'
     },
     SIZE: 15,
     MAX_COUNT: 15,
@@ -101,8 +101,8 @@ export const butterfly_config = {
         MAX_SPEED_MULT: 1.1
     },
     PANIC: {
-        FREQUENCY: 15,        // Higher frequency for more erratic movement
-        AMPLITUDE: 1.0        // Larger amplitude for more noticeable panic
+        FREQUENCY: 4,
+        AMPLITUDE: 2
     },
     HOVER: {
         MIN_DURATION: 5000,  // 5 seconds minimum

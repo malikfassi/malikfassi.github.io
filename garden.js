@@ -50,7 +50,6 @@ function initializeGardenElements() {
     handleCanvasResize(); // Initial resize
 
     // Add event listeners for interaction
-    gardenCanvas.addEventListener("mousemove", handleMouseMove);
     gardenCanvas.addEventListener("click", handleCanvasClick);
     
     console.log('Garden elements initialized');
@@ -64,6 +63,17 @@ function initializeGardenElements() {
             console.log('Debug mode:', debugEnabled);
         });
     }
+
+    // Add mouse move listener
+    window.addEventListener('mousemove', (event) => {
+        const rect = gardenCanvas.getBoundingClientRect();
+        mouseX = event.clientX - rect.left;
+        mouseY = event.clientY - rect.top;
+        
+        if (isDebugMode) {
+            console.log('Mouse moved:', { mouseX, mouseY });
+        }
+    });
 }
 
 
@@ -188,7 +198,7 @@ function animateGarden() {
 
     if (isDebugMode) {
         drawDebugInfo(ctx, mouseX, mouseY);
-        drawCursorDebug(ctx);
+        drawCursorInfo(ctx);
     }
 
     requestAnimationFrame(animateGarden);
@@ -197,20 +207,19 @@ function animateGarden() {
 function handleMouseMove(e) {
     if (!gardenCanvas) return;
     
-    const canvasRect = gardenCanvas.getBoundingClientRect();
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
+    const rect = gardenCanvas.getBoundingClientRect();
     
-    // Mouse position relative to canvas, accounting for scroll
-    mouseX = e.clientX - canvasRect.left + scrollX;
-    mouseY = e.clientY - canvasRect.top + scrollY;
+    // Calculate mouse position relative to canvas
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
     
-    if (butterfly_config.DEBUG) {
-        console.log('Mouse:', {
-            client: { x: e.clientX, y: e.clientY },
-            canvas: { x: mouseX, y: mouseY },
-            scroll: { x: scrollX, y: scrollY }
-        });
+    // Add scroll offset
+    mouseX += window.scrollX;
+    mouseY += window.scrollY;
+
+    // Debug log
+    if (isDebugMode) {
+        console.log('Mouse position:', { mouseX, mouseY });
     }
 }
 
@@ -306,7 +315,7 @@ function drawDebugInfo(ctx, mouseX, mouseY) {
         const lines = [
             `State: ${butterfly.state}`,
             `Words Hovered: ${butterfly.wordsHovered || 0}`,
-            `Target word: ${butterfly.targetElement}`,
+            `Target word: ${butterfly.targetElement.textContent}`,
             `Pos: (${Math.round(screenX)}, ${Math.round(screenY)})`
         ];
         
@@ -374,12 +383,14 @@ function drawDebugInfo(ctx, mouseX, mouseY) {
         }
         
         ctx.restore();
-    });
+    }); 
+}
 
-    // Draw mouse coordinates if needed
-    if (mouseX !== undefined && mouseY !== undefined) {
+function drawCursorInfo(ctx) {
+      // Draw mouse coordinates if needed
+      if (mouseX !== undefined && mouseY !== undefined) {
         const mouseText = `Mouse: (${Math.round(mouseX)}, ${Math.round(mouseY)})`;
-        ctx.font = '12px Arial';
+        ctx.font = '12px monospace';
         const textWidth = ctx.measureText(mouseText).width;
         const padding = 10;
         const boxWidth = textWidth + (padding * 2);
@@ -402,35 +413,6 @@ function drawDebugInfo(ctx, mouseX, mouseY) {
         ctx.fillStyle = color_config.DEBUG.MOUSE_COORDS;
         ctx.fillText(mouseText, mouseX + 20 + padding, mouseY - 12);
     }
-}
-
-function drawCursorDebug(ctx) {
-    if (!isDebugMode) return;
-    
-    ctx.save();
-    ctx.font = 'bold 14px monospace';
-    
-    // Add a solid background
-    const text = `(${Math.round(mouseX)}, ${Math.round(mouseY)})`;
-    const metrics = ctx.measureText(text);
-    const padding = 6;
-    
-    // Black background with high opacity
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
-    ctx.fillRect(
-        mouseX - metrics.width/2 - padding,
-        mouseY - 30 - padding,
-        metrics.width + padding * 2,
-        24
-    );
-    
-    // White text
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, mouseX, mouseY - 30);
-    
-    ctx.restore();
 }
 
 function updateWordCoordinate(element) {
@@ -457,3 +439,23 @@ window.addEventListener('resize', updateWordCoordinate);
 
 // Update coordinates periodically to handle dynamic content changes
 setInterval(updateWordCoordinate, 100);
+
+// Add event listener to track mouse position
+gardenCanvas.addEventListener('mousemove', handleMouseMove);
+
+// Modify the draw function to pass mouse coordinates
+function draw() {
+    ctx.clearRect(0, 0, gardenCanvas.width, gardenCanvas.height);
+    
+    // Update and draw butterflies with mouse coordinates
+    butterflies.forEach(butterfly => {
+        updateButterfly(butterfly, mouseX, mouseY);
+        drawButterfly(ctx, butterfly);
+    });
+
+    if (isDebugMode) {
+        drawDebugInfo(ctx, mouseX, mouseY);
+    }
+
+    requestAnimationFrame(draw);
+}

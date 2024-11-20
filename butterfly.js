@@ -20,27 +20,24 @@ export function updateButterfly(butterfly, mouseX, mouseY) {
     handleScroll(butterfly);
     
     // Check mouse interaction before any other state updates
-    const isScared = handleMouseInteraction(butterfly, mouseX, mouseY);
+    handleMouseInteraction(butterfly, mouseX, mouseY);
     
-    // If scared, skip other state handling
-    if (isScared) {
-        return;
+    // Handle other states if not scared
+    if (butterfly.state !== butterfly_config.STATES.SCARED) {
+        switch (butterfly.state) {
+            case butterfly_config.STATES.FLYING:
+                handleButterflyFlying(butterfly);
+                break;
+            case butterfly_config.STATES.HOVERING:
+                handleButterflyHovering(butterfly, currentTime);
+                break;
+            case butterfly_config.STATES.LEAVING:
+                handleButterflyLeaving(butterfly);
+                break;
+        }
     }
 
-    // Only handle other states if not scared
-    switch (butterfly.state) {
-        case butterfly_config.STATES.FLYING:
-            handleButterflyFlying(butterfly);
-            break;
-        case butterfly_config.STATES.HOVERING:
-            handleButterflyHovering(butterfly, currentTime);
-            break;
-        case butterfly_config.STATES.LEAVING:
-            handleButterflyLeaving(butterfly);
-            break;
-    }
-
-    // Update position based on velocity
+    // Update position based on velocity (always do this)
     butterfly.x += butterfly.velocity.x;
     butterfly.y += butterfly.velocity.y;
 
@@ -594,55 +591,49 @@ function handleMouseInteraction(butterfly, mouseX, mouseY) {
     
     // Check if mouse is within fear radius
     if (distanceToMouse < butterfly_config.FEAR_RADIUS) {
-        // Switch to scared state if not already scared
-        if (butterfly.state !== butterfly_config.STATES.SCARED) {
-            if (butterfly_config.DEBUG) {
-                console.log(`🦋 Butterfly became scared! Distance to mouse: ${Math.round(distanceToMouse)}px`);
-                console.log(`Mouse position: (${Math.round(mouseX)}, ${Math.round(mouseY)})`);
-                console.log(`Butterfly position: (${Math.round(butterfly.x)}, ${Math.round(butterfly.y)})`);
-            }
-            butterfly.state = butterfly_config.STATES.SCARED;
-            butterfly.scaredStartTime = Date.now();
-            
-            // Release current target if any
-            if (butterfly.targetElement) {
-                butterfly.targetElement.classList.remove("targeted");
-                butterfly.targetElement.style.color = ""; // Reset color
-                butterfly.targetElement = null;
-            }
-        }
+        // Calculate how scared the butterfly is (1 when very close, 0 when at fear radius)
+        const fearIntensity = Math.pow(1 - (distanceToMouse / butterfly_config.FEAR_RADIUS), 2);
         
         // Calculate escape direction (away from mouse)
         const escapeAngle = Math.atan2(dy, dx);
         
-        // Faster escape when closer to mouse
-        const escapeSpeed = butterfly_config.ESCAPE_SPEED * 
-            (1 - (distanceToMouse / butterfly_config.FEAR_RADIUS));
+        // Calculate target escape velocity
+        const targetVelocityX = Math.cos(escapeAngle) * butterfly_config.ESCAPE_SPEED * fearIntensity;
+        const targetVelocityY = Math.sin(escapeAngle) * butterfly_config.ESCAPE_SPEED * fearIntensity;
         
-        // Set butterfly angle to match escape direction
-        butterfly.angle = escapeAngle + Math.PI; // Face away from mouse
+        // Gradually adjust current velocity towards target (smoother acceleration)
+        butterfly.velocity.x += (targetVelocityX - butterfly.velocity.x) * 0.2;
+        butterfly.velocity.y += (targetVelocityY - butterfly.velocity.y) * 0.2;
         
-        // Add some erratic panic movement
-        const panicTime = Date.now() / 1000;
-        const panicX = Math.sin(panicTime * butterfly_config.PANIC.FREQUENCY + butterfly.timeOffset) * 
-                      butterfly_config.PANIC.AMPLITUDE;
-        const panicY = Math.cos(panicTime * butterfly_config.PANIC.FREQUENCY + butterfly.timeOffset) * 
-                      butterfly_config.PANIC.AMPLITUDE;
+        // Add slight sideways movement to make it more natural
+        const sideAngle = escapeAngle + Math.PI/2;
+        const sideMovement = Math.sin(Date.now() * 0.005) * fearIntensity * 0.5;
+        butterfly.velocity.x += Math.cos(sideAngle) * sideMovement;
+        butterfly.velocity.y += Math.sin(sideAngle) * sideMovement;
         
-        // Update velocity to escape
-        butterfly.velocity.x = Math.cos(escapeAngle) * escapeSpeed + panicX;
-        butterfly.velocity.y = Math.sin(escapeAngle) * escapeSpeed + panicY;
+        // Set state to scared if not already
+        if (butterfly.state !== butterfly_config.STATES.SCARED) {
+            butterfly.state = butterfly_config.STATES.SCARED;
+            butterfly.scaredStartTime = Date.now();
+            
+            if (butterfly.targetElement) {
+                butterfly.targetElement.classList.remove("targeted");
+                butterfly.targetElement.style.color = "";
+                butterfly.targetElement = null;
+            }
+        }
         
-        return true; // Indicates butterfly is scared
+        return true;
     }
     
-    // Check if scared state should end
+    // Gradually return to normal state when far enough
     if (butterfly.state === butterfly_config.STATES.SCARED) {
         const scaredDuration = Date.now() - butterfly.scaredStartTime;
-        if (scaredDuration > butterfly_config.SCARED_DURATION) {
+        if (scaredDuration > butterfly_config.SCARED_DURATION && 
+            distanceToMouse > butterfly_config.FEAR_RADIUS * 1.2) {
             butterfly.state = butterfly_config.STATES.FLYING;
         }
-        return true; // Still in scared state
+        return true;
     }
     
     return false;
