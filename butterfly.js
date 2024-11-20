@@ -179,7 +179,7 @@ function handleButterflySpawning(butterfly) {
 }
 
 function releaseTarget(butterfly) {
-    if (butterfly.targetElement) {
+    if (butterfly.targetElement && butterfly.state !== butterfly_config.STATES.LEAVING) {
         butterfly.targetElement.classList.remove("targeted");
         butterfly.targetElement.style.color = '';
         butterfly.targetElement = null;
@@ -190,6 +190,9 @@ function releaseTarget(butterfly) {
     // Check if butterfly should leave after hovering enough words
     if (butterfly.wordsHovered >= butterfly_config.HOVER_WORDS_BEFORE_LEAVING) {
         butterfly.state = butterfly_config.STATES.LEAVING;
+        // The leaving target will be set in handleButterflyLeaving
+    } else {
+        butterfly.state = butterfly_config.STATES.FLYING;
     }
 }
 
@@ -295,7 +298,7 @@ function spawnButterfly() {
         x,
         y,
         size: butterfly_config.SIZE,
-        color: color_config.PASTEL_COLORS[Math.floor(Math.random() * color_config.PASTEL_COLORS.length)],
+        color: color_config.BUTTERFLY_COLORS[Math.floor(Math.random() * color_config.BUTTERFLY_COLORS.length)],
         angle: 0,
         velocity: { x: 0, y: 0 },
         state: butterfly_config.STATES.FLYING,
@@ -433,53 +436,51 @@ export function drawButterfly(ctx, butterfly) {
 
 // Add this function to handle the butterfly leaving the canvas
 function handleButterflyLeaving(butterfly) {
-    // Determine nearest edge and set target point if not set
-    if (!butterfly.leavingTarget) {
-        const distanceToTop = butterfly.y;
-        const distanceToRight = window.innerWidth - butterfly.x;
-        const distanceToBottom = window.innerHeight + window.scrollY - butterfly.y;
-        const distanceToLeft = butterfly.x;
-
-        // Find the nearest edge and set a random point along it
-        const edges = [
-            { name: 'top', distance: distanceToTop, getTarget: () => ({ 
-                x: Math.random() * window.innerWidth, 
-                y: -butterfly_config.SIZE 
-            })},
-            { name: 'right', distance: distanceToRight, getTarget: () => ({ 
-                x: window.innerWidth + butterfly_config.SIZE, 
-                y: Math.random() * window.innerHeight + window.scrollY 
-            })},
-            { name: 'bottom', distance: distanceToBottom, getTarget: () => ({ 
-                x: Math.random() * window.innerWidth, 
-                y: window.innerHeight + butterfly_config.SIZE + window.scrollY 
-            })},
-            { name: 'left', distance: distanceToLeft, getTarget: () => ({ 
-                x: -butterfly_config.SIZE, 
-                y: Math.random() * window.innerHeight + window.scrollY 
-            })}
+    // If butterfly doesn't have a leaving target yet, set one
+    if (!butterfly.targetElement || butterfly.state !== butterfly_config.STATES.LEAVING) {
+        // Create a virtual target at the nearest screen edge
+        const edgeTarget = document.createElement('div');
+        
+        // Determine the nearest edge
+        const distToLeft = butterfly.x;
+        const distToRight = gardenCanvas.width - butterfly.x;
+        const distToTop = butterfly.y;
+        const distToBottom = gardenCanvas.height - butterfly.y;
+        
+        // Find the minimum distance and corresponding edge position
+        const distances = [
+            { edge: 'left', dist: distToLeft, x: -butterfly_config.EDGE_BUFFER, y: butterfly.y },
+            { edge: 'right', dist: distToRight, x: gardenCanvas.width + butterfly_config.EDGE_BUFFER, y: butterfly.y },
+            { edge: 'top', dist: distToTop, x: butterfly.x, y: -butterfly_config.EDGE_BUFFER },
+            { edge: 'bottom', dist: distToBottom, x: butterfly.x, y: gardenCanvas.height + butterfly_config.EDGE_BUFFER }
         ];
-
-        const nearestEdge = edges.reduce((a, b) => a.distance < b.distance ? a : b);
-        butterfly.leavingTarget = nearestEdge.getTarget();
+        
+        const nearestEdge = distances.reduce((min, curr) => curr.dist < min.dist ? curr : min);
+        
+        // Set the virtual target's position
+        edgeTarget.getBoundingClientRect = () => ({
+            left: nearestEdge.x,
+            top: nearestEdge.y,
+            width: 0,
+            height: 0
+        });
+        
+        edgeTarget.textContent = `Leaving via ${nearestEdge.edge} edge`;
+        butterfly.targetElement = edgeTarget;
+        
+        if (butterfly_config.DEBUG) {
+            console.log(`Butterfly leaving towards ${nearestEdge.edge} edge at (${nearestEdge.x}, ${nearestEdge.y})`);
+        }
     }
 
-    // Use common movement function
-    butterflyMoveTo(butterfly, 
-        butterfly.leavingTarget.x, 
-        butterfly.leavingTarget.y, 
-        butterfly_config.LEAVING_SPEED
-    );
+    // Move towards the edge target
+    const targetPos = getElementPagePosition(butterfly.targetElement, gardenCanvas);
+    butterflyMoveTo(butterfly, targetPos.x, targetPos.y, butterfly_config.LEAVING_SPEED);
 
-    // Check if butterfly has left the screen
-    const margin = butterfly_config.SIZE * 2;
-    const isOffscreen = 
-        butterfly.y < -margin ||
-        butterfly.y > window.innerHeight + margin + window.scrollY ||
-        butterfly.x < -margin ||
-        butterfly.x > window.innerWidth + margin;
-
-    if (isOffscreen) {
+    // Check if butterfly has reached the edge
+    const distanceToTarget = Math.hypot(targetPos.x - butterfly.x, targetPos.y - butterfly.y);
+    if (distanceToTarget < butterfly_config.EDGE_BUFFER) {
+        // Remove the butterfly when it reaches the edge
         const index = butterflies.indexOf(butterfly);
         if (index > -1) {
             butterflies.splice(index, 1);

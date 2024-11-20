@@ -5,23 +5,36 @@ export function toggleDebug() {
 }
 
 export const color_config = {
-    PASTEL_COLORS: [
-        '#FF8A8A',  // Darker Soft Red
-        '#FF9E9E',  // Darker Soft Pink
-        '#FFC4A3',  // Darker Soft Peach
-        '#C8E6A3',  // Darker Soft Green
-        '#A8D8C0',  // Darker Soft Mint
-        '#B0BEEA',  // Darker Soft Lavender
-        '#E3D58A',  // Darker Soft Yellow
-        '#E5A88A',  // Darker Soft Apricot
-        '#C39AFF',  // Darker Soft Violet
-        '#8AA9E9',  // Darker Soft Blue
-        '#8CCF8A',  // Darker Soft Lime
-        '#E08A8F',  // Darker Soft Coral
-        '#C8A3D7',  // Darker Soft Purple
-        '#9F8DBB',  // Darker Soft Indigo
-        '#7FAFE9'   // Darker Soft Sky Blue
-    ]
+    BUTTERFLY_COLORS: [
+        // Deeper Pastels with good contrast
+        '#7C4DFF',  // Deep Lavender
+        '#6200EA',  // Deep Purple
+        '#2962FF',  // Deep Blue
+        '#00838F',  // Deep Cyan
+        '#00695C',  // Deep Teal
+        '#2E7D32',  // Deep Green
+        '#827717',  // Deep Lime
+        '#FF6D00',  // Deep Orange
+        '#D84315',  // Deep Orange-Red
+        '#C62828',  // Deep Red
+        '#AD1457',  // Deep Pink
+        '#6A1B9A',  // Deep Purple-Pink
+        '#4527A0',  // Deep Indigo
+        '#283593',  // Deep Royal Blue
+        '#1565C0',  // Deep Sky Blue
+        '#00695C',  // Deep Ocean Green
+        '#2E7D32',  // Deep Forest Green
+        '#BF360C',  // Deep Burnt Orange
+        '#8E24AA',  // Deep Magenta
+        '#5E35B1'   // Deep Violet
+    ],
+    DEBUG: {
+        TEXT: 'rgba(0, 0, 0, 0.8)',
+        BOX_BG: 'rgba(255, 255, 255, 0.9)',
+        BOX_BORDER: 'rgba(0, 0, 0, 0.2)',
+        TARGET_LINE: 'rgba(255, 0, 0, 0.6)',
+        MOUSE_COORDS: '#FF1493'
+    }
 };
 
 export const garden_config = {
@@ -78,7 +91,7 @@ export const butterfly_config = {
         AMPLITUDE: 8,
         FREQUENCY: 2000
     },
-    EDGE_BUFFER: 50,
+    EDGE_BUFFER: 100,
     HOVER_THRESHOLD: 15,
     WANDER: {
         AMPLITUDE: 0.7,         // Overall wandering strength

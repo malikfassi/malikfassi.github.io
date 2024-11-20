@@ -1,4 +1,4 @@
-import { garden_config, butterfly_config } from "./config.js";
+import { color_config, butterfly_config } from "./config.js";
 import { plantSeed, updateFlower, flowers } from "./flower.js";
 import { getElementPagePosition } from "./utils.js";
 import {
@@ -187,7 +187,7 @@ function animateGarden() {
     });
 
     if (isDebugMode) {
-        drawDebugInfo(ctx);
+        drawDebugInfo(ctx, mouseX, mouseY);
         drawCursorDebug(ctx);
     }
 
@@ -239,9 +239,62 @@ function updateCaughtButterfliesDisplay() {
   }
 }
 
-function drawDebugInfo(ctx) {
+function drawDebugInfo(ctx, mouseX, mouseY) {
     if (!isDebugMode) return;
+
+    // Initialize state counts from butterfly config states
+    const stateCounts = {};
+    Object.values(butterfly_config.STATES).forEach(state => {
+        stateCounts[state] = 0;
+    });
+
+    // Count butterflies in each state
+    butterflies.forEach(butterfly => {
+        stateCounts[butterfly.state] = (stateCounts[butterfly.state] || 0) + 1;
+    });
+
+    // Calculate total butterflies
+    const totalButterflies = butterflies.length;
+
+    // Draw state counts on canvas
+    ctx.save();
+    const stateText = Object.entries(stateCounts)
+        .map(([state, count]) => `${state}: ${count}`)
+        .join(' | ');
+    const fullText = `Total: ${totalButterflies} | ${stateText}`;
     
+    // Calculate dimensions
+    ctx.font = '14px Arial';
+    const textWidth = ctx.measureText(fullText).width;
+    const padding = 10;
+    const boxWidth = textWidth + (padding * 2);
+    const boxHeight = 25;
+    const cornerRadius = 8;
+    
+    // Position at top center of canvas
+    const x = (gardenCanvas.width - boxWidth) / 2;
+    const y = 10;
+
+    // Draw background
+    ctx.fillStyle = color_config.DEBUG.BOX_BG;
+    ctx.beginPath();
+    ctx.roundRect(x, y, boxWidth, boxHeight, cornerRadius);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = color_config.DEBUG.BOX_BORDER;
+    ctx.beginPath();
+    ctx.roundRect(x, y, boxWidth, boxHeight, cornerRadius);
+    ctx.stroke();
+
+    // Draw text
+    ctx.fillStyle = color_config.DEBUG.TEXT;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fullText, x + boxWidth/2, y + boxHeight/2);
+    ctx.restore();
+
+    // Keep all existing debug drawing code
     butterflies.forEach(butterfly => {
         // Calculate positions first
         const relativePos = getRelativeButterflyPosition(butterfly, gardenCanvas);
@@ -253,6 +306,7 @@ function drawDebugInfo(ctx) {
         const lines = [
             `State: ${butterfly.state}`,
             `Words Hovered: ${butterfly.wordsHovered || 0}`,
+            `Target word: ${butterfly.targetElement}`,
             `Pos: (${Math.round(screenX)}, ${Math.round(screenY)})`
         ];
         
@@ -321,6 +375,33 @@ function drawDebugInfo(ctx) {
         
         ctx.restore();
     });
+
+    // Draw mouse coordinates if needed
+    if (mouseX !== undefined && mouseY !== undefined) {
+        const mouseText = `Mouse: (${Math.round(mouseX)}, ${Math.round(mouseY)})`;
+        ctx.font = '12px Arial';
+        const textWidth = ctx.measureText(mouseText).width;
+        const padding = 10;
+        const boxWidth = textWidth + (padding * 2);
+        const boxHeight = 20;
+        const cornerRadius = 8;
+
+        // Draw background
+        ctx.fillStyle = color_config.DEBUG.BOX_BG;
+        ctx.beginPath();
+        ctx.roundRect(mouseX + 20, mouseY - 25, boxWidth, boxHeight, cornerRadius);
+        ctx.fill();
+
+        // Draw border
+        ctx.strokeStyle = color_config.DEBUG.BOX_BORDER;
+        ctx.beginPath();
+        ctx.roundRect(mouseX + 20, mouseY - 25, boxWidth, boxHeight, cornerRadius);
+        ctx.stroke();
+
+        // Draw text
+        ctx.fillStyle = color_config.DEBUG.MOUSE_COORDS;
+        ctx.fillText(mouseText, mouseX + 20 + padding, mouseY - 12);
+    }
 }
 
 function drawCursorDebug(ctx) {

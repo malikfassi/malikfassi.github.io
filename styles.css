@@ -209,3 +209,18 @@ body.debug-mode .targeted .word-coordinates {
     margin-bottom: 40px;
 }
 
+#butterflyStatesCounts {
+    font-family: monospace;
+    font-size: 12px;
+    white-space: nowrap;
+    color: #333;
+}
+
+body.debug-mode #butterflyStatesCounts {
+    display: block;
+}
+
+#butterflyStatesCounts:not(body.debug-mode) {
+    display: none;
+}
+
