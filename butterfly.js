@@ -324,11 +324,14 @@ function spawnButterfly() {
             break;
     }
 
+    const color = color_config.BUTTERFLY_COLORS[Math.floor(Math.random() * color_config.BUTTERFLY_COLORS.length)];
+
     const butterfly = {
         x,
         y,
         size: butterfly_config.SIZE,
-        color: color_config.BUTTERFLY_COLORS[Math.floor(Math.random() * color_config.BUTTERFLY_COLORS.length)],
+        color: color,
+        originalColor: color,
         angle: 0,
         velocity: { x: 0, y: 0 },
         state: butterfly_config.STATES.FLYING,
@@ -350,8 +353,32 @@ export function drawButterfly(ctx, butterfly) {
     
     // Get relative position for drawing
     const relativePos = getRelativeButterflyPosition(butterfly, gardenCanvas);
-    
+        
+    if (!butterfly.color) {
+        butterfly.color = '#FFFFFF'; // Default to white or any other default color
+    }
+
+    if (butterfly.state === butterfly_config.STATES.SCARED) {
+        const flashSpeed = 0.02;
+        const flashIntensity = Math.abs(Math.sin(Date.now() * flashSpeed));
+        
+        const baseColor = butterfly.originalColor; // Use originalColor or fallback to current colo
+        const r = parseInt(baseColor.slice(1, 3), 16);
+        const g = parseInt(baseColor.slice(3, 5), 16);
+        const b = parseInt(baseColor.slice(5, 7), 16);
+        
+        const angerTint = 0.8;
+        const newR = Math.min(255, r + (255 - r) * angerTint);
+        const newG = Math.max(0, g - g * angerTint * 0.5);
+        const newB = Math.max(0, b - b * angerTint * 0.5);
+        
+        butterfly.color = `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`;
+    } else {
+        butterfly.color = butterfly.originalColor || butterfly.color;
+    }
+
     const { x, y, angle, color, state } = butterfly;
+
     const baseSize = butterfly_config.SIZE;
     const time = Date.now() / 1000 + (butterfly.timeOffset || 0);
     
@@ -442,64 +469,40 @@ export function drawButterfly(ctx, butterfly) {
     for (let i = -2; i <= 2; i++) {
         ctx.fillRect(-pixelSize / 2, i * pixelSize, pixelSize, pixelSize);
     }
-
-        // Draw scared symbol if butterfly is scared
-        if (butterfly.state === butterfly_config.STATES.SCARED && butterfly.scaredSymbol) {
-            // Comic style font
-            ctx.font = 'bold 16px Comic Sans MS, cursive';
-            
-            // Flash effect with softer red
-            const flashSpeed = 0.015;
-            const flashIntensity = Math.sin(Date.now() * flashSpeed);
-            
-            if (flashIntensity > 0) {
-                ctx.fillStyle = '#ff6b6b';
-                ctx.strokeStyle = 'white';
-            } else {
-                ctx.fillStyle = 'white';
-                ctx.strokeStyle = '#ff6b6b';
-            }
-            ctx.lineWidth = 3;
-            
-            // Position symbol in manga style (top-right of the head)
-            const symbolOffsetX = butterfly_config.SIZE * 0.8; // Right of the butterfly
-            const symbolOffsetY = -butterfly_config.SIZE * 1; // Above the butterfly
-            
-            // Add simple bounce effect
-            const bounce = Math.sin(Date.now() * 0.008) * 3;
-            
-            // Draw text with outline
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.strokeText(butterfly.scaredSymbol, symbolOffsetX, symbolOffsetY + bounce);
-            ctx.fillText(butterfly.scaredSymbol, symbolOffsetX, symbolOffsetY + bounce);
-        }
-        
-        ctx.restore();
     
-    // Modify butterfly appearance when scared
-    if (butterfly.state === butterfly_config.STATES.SCARED) {
-        // Flash effect
-        const flashSpeed = 0.01;
-        const flashIntensity = Math.abs(Math.sin(Date.now() * flashSpeed));
+    // Draw scared symbol if butterfly is scared
+    if (butterfly.state === butterfly_config.STATES.SCARED && butterfly.scaredSymbol) {
+        // Comic style font
+        ctx.font = 'bold 16px Comic Sans MS, cursive';
         
-        // Mix between butterfly's base color and red based on flash intensity
-        const baseColor = butterfly.color;
-        const r = parseInt(baseColor.slice(1,3), 16);
-        const g = parseInt(baseColor.slice(3,5), 16);
-        const b = parseInt(baseColor.slice(5,7), 16);
+        // Flash effect with softer red
+        const flashSpeed = 0.015;
+        const flashIntensity = Math.sin(Date.now() * flashSpeed);
         
-        // More red during flash peaks
-        const redTint = 0.6 * flashIntensity;
-        const newR = Math.min(255, r + (255 - r) * redTint);
-        const newG = Math.max(0, g - g * redTint * 0.5);
-        const newB = Math.max(0, b - b * redTint * 0.5);
+        if (flashIntensity > 0) {
+            ctx.fillStyle = '#ff6b6b';
+            ctx.strokeStyle = 'white';
+        } else {
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = '#ff6b6b';
+        }
+        ctx.lineWidth = 3;
         
-        ctx.fillStyle = `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`;
+        // Position symbol in manga style (top-right of the head)
+        const symbolOffsetX = butterfly_config.SIZE * 0.8; // Right of the butterfly
+        const symbolOffsetY = -butterfly_config.SIZE * 1; // Above the butterfly
+        
+        // Add simple bounce effect
+        const bounce = Math.sin(Date.now() * 0.008) * 3;
+        
+        // Draw text with outline
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeText(butterfly.scaredSymbol, symbolOffsetX, symbolOffsetY + bounce);
+        ctx.fillText(butterfly.scaredSymbol, symbolOffsetX, symbolOffsetY + bounce);
     }
     
-    // Final restore for the entire butterfly
-    ctx.restore();
+    ctx.restore(); 
 }
 
 // Add this function to handle the butterfly leaving the canvas
