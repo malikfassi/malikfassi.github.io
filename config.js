@@ -60,8 +60,8 @@ export const butterfly_config = {
         LEAVING: 'leaving'
     },
     SIZE: 15,
-    MAX_COUNT: 10,
-    PEACEFUL_SPEED: 2,
+    MAX_COUNT: 50,
+    PEACEFUL_SPEED: 3,
     MAX_SPEED: 5,
     MIN_SPEED: 0.5,
     SCROLL_ADJUSTMENT_SPEED: 1.5,
@@ -71,7 +71,7 @@ export const butterfly_config = {
         MIN_INTERVAL: 100,
         MAX_INTERVAL: 200
     },
-    HOVER_WORDS_BEFORE_LEAVING: 3,
+    HOVER_WORDS_BEFORE_LEAVING: 1,
     LEAVING_SPEED: 3,
     DEBUG: true,
     HOVER_OSCILLATION: {

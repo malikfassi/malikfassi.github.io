@@ -60,80 +60,56 @@ export function updateButterfly(butterfly, mouseX, mouseY) {
 function butterflyMoveTo(butterfly, targetX, targetY, speed = butterfly_config.PEACEFUL_SPEED) {
     const time = Date.now() / 1000;
     
-    // Initialize more complex wandering properties if not exists
-    if (!butterfly.wanderOffsets) {
-        butterfly.wanderOffsets = {
-            // Multiple frequencies for more organic movement
-            frequencies: {
-                x: [0.2 + Math.random() * 0.1, 0.4 + Math.random() * 0.2, 0.1 + Math.random() * 0.1],
-                y: [0.3 + Math.random() * 0.1, 0.2 + Math.random() * 0.2, 0.15 + Math.random() * 0.1]
-            },
-            // Phase offsets for each frequency
-            phases: {
-                x: [Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2],
-                y: [Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2]
-            },
-            // Amplitudes for each frequency
-            amplitudes: {
-                x: [0.6, 0.3, 0.1],  // Decreasing influence for higher frequencies
-                y: [0.5, 0.35, 0.15]
-            }
-        };
-    }
-
     // Calculate direction to target
     const dx = targetX - butterfly.x;
     const dy = targetY - butterfly.y;
     const distance = Math.hypot(dx, dy);
 
-    // Complex wandering pattern combining multiple sine waves
-    let wanderX = 0;
-    let wanderY = 0;
+    // Base floating motion (figure-eight pattern)
+    const floatX = Math.sin(time * 0.5 + butterfly.timeOffset) * Math.cos(time * 0.3);
+    const floatY = Math.cos(time * 0.4 + butterfly.timeOffset) * Math.sin(time * 0.6);
 
-    // Add each frequency component
-    for (let i = 0; i < 3; i++) {
-        wanderX += Math.sin(
-            time * butterfly.wanderOffsets.frequencies.x[i] + 
-            butterfly.wanderOffsets.phases.x[i]
-        ) * butterfly.wanderOffsets.amplitudes.x[i];
+    // Vertical bobbing (stronger when further from target)
+    const verticalBob = Math.sin(time * 2 + butterfly.timeOffset) * 
+        Math.min(1.0, distance / 200) * 0.3;
 
-        wanderY += Math.sin(
-            time * butterfly.wanderOffsets.frequencies.y[i] + 
-            butterfly.wanderOffsets.phases.y[i]
-        ) * butterfly.wanderOffsets.amplitudes.y[i];
-    }
-
-    // Add circular motion component
-    const circularMotion = {
-        x: Math.cos(time * 0.5) * Math.sin(time * 0.3) * 0.2,
-        y: Math.sin(time * 0.5) * Math.cos(time * 0.3) * 0.2
+    // Random course corrections
+    const courseCorrection = {
+        x: Math.sin(time * 0.1 + butterfly.timeOffset * 2) * 0.2,
+        y: Math.cos(time * 0.15 + butterfly.timeOffset * 2) * 0.2
     };
 
-    wanderX += circularMotion.x;
-    wanderY += circularMotion.y;
-
-    // Distance-based wandering weight with smooth transition
-    const wanderWeight = Math.min(0.8, (distance / butterfly_config.WANDER.DISTANCE_FACTOR)) * 
-        (0.7 + Math.sin(time * 0.2) * 0.3); // Slightly varying influence
+    // Combine all motion components
+    let totalX = 0;
+    let totalY = 0;
 
     if (distance > 1) {
-        // Smoother target influence
-        const targetInfluence = 1 - (wanderWeight * butterfly_config.WANDER.TARGET_WEIGHT);
-        
-        // Combine direct movement with wandering, using smooth acceleration
-        butterfly.velocity.x += (
-            (dx / distance) * speed * targetInfluence + 
-            wanderX * butterfly_config.WANDER.AMPLITUDE * wanderWeight
-        ) * 0.06;
-        
-        butterfly.velocity.y += (
-            (dy / distance) * speed * targetInfluence + 
-            wanderY * butterfly_config.WANDER.AMPLITUDE * wanderWeight
-        ) * 0.06;
+        // Direct movement towards target (stronger when closer)
+        const targetInfluence = Math.max(0.2, 1 - (distance / 1000));
+        totalX += (dx / distance) * speed * targetInfluence;
+        totalY += (dy / distance) * speed * targetInfluence;
+
+        // Add floating motion (stronger when further)
+        const floatInfluence = Math.min(1.0, distance / 200);
+        totalX += floatX * speed * floatInfluence * 0.5;
+        totalY += (floatY + verticalBob) * speed * floatInfluence * 0.5;
+
+        // Add course corrections
+        totalX += courseCorrection.x * speed;
+        totalY += courseCorrection.y * speed;
+
+        // Smooth acceleration
+        butterfly.velocity.x += (totalX - butterfly.velocity.x) * 0.03;
+        butterfly.velocity.y += (totalY - butterfly.velocity.y) * 0.03;
     }
 
-    // Add slight upward bias for more natural movement
-    butterfly.velocity.y += Math.sin(time * 0.2) * 0.01;
+    // Apply velocity with air resistance
+    butterfly.x += butterfly.velocity.x;
+    butterfly.y += butterfly.velocity.y;
+    
+    // More natural deceleration
+    butterfly.velocity.x *= 0.95 + Math.sin(time * 0.8) * 0.02;
+    butterfly.velocity.y *= 0.95 + Math.cos(time * 0.8) * 0.02;
 }
 
 function handleButterflyFlying(butterfly) {
