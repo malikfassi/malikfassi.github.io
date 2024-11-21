@@ -74,6 +74,11 @@ function initializeGardenElements() {
             console.log('Mouse moved:', { mouseX, mouseY });
         }
     });
+
+    // Add touch event listeners for interaction
+    gardenCanvas.addEventListener("touchstart", handleTouchStart, { passive: true });
+    gardenCanvas.addEventListener("touchmove", handleTouchMove, { passive: true });
+    gardenCanvas.addEventListener("touchend", handleTouchEnd, { passive: true });
 }
 
 
@@ -450,4 +455,51 @@ function draw() {
     }
 
     requestAnimationFrame(draw);
+}
+
+function handleTouchStart(event) {
+    if (!gardenCanvas) return;
+    
+    const rect = gardenCanvas.getBoundingClientRect();
+    const touch = event.touches[0];
+    
+    // Calculate touch position relative to canvas
+    mouseX = touch.clientX - rect.left;
+    mouseY = touch.clientY - rect.top;
+    
+    // Add scroll offset
+    mouseX += window.scrollX;
+    mouseY += window.scrollY;
+    
+    // Debug log
+    if (isDebugMode) {
+        console.log('Touch start position:', { mouseX, mouseY });
+    }
+}
+
+function handleTouchMove(event) {
+    if (!gardenCanvas) return;
+    
+    const rect = gardenCanvas.getBoundingClientRect();
+    const touch = event.touches[0];
+    
+    // Calculate touch position relative to canvas
+    mouseX = touch.clientX - rect.left;
+    mouseY = touch.clientY - rect.top;
+    
+    // Add scroll offset
+    mouseX += window.scrollX;
+    mouseY += window.scrollY;
+    
+    // Debug log
+    if (isDebugMode) {
+        console.log('Touch move position:', { mouseX, mouseY });
+    }
+}
+
+function handleTouchEnd(event) {
+    // Handle touch end if necessary
+    if (isDebugMode) {
+        console.log('Touch end');
+    }
 }

@@ -1,17 +1,8 @@
-import { color_config, butterfly_config, isDebugMode } from "./config.js";
+import { color_config, butterfly_config } from "./config.js";
 import { gardenCanvas } from "./garden.js";
-import { getElementPagePosition, hexToRgb, rgbToHsl, hslToHex } from './utils.js';
+import { getElementPagePosition } from './utils.js';
 
 export let butterflies = [];
-let butterflySpawnTimeoutId = null;
-let lastLoggedPosition = { x: 0, y: 0 };
-const LOG_THRESHOLD = 50; // Only log when position changes by this many pixels
-
-function shouldLogPosition(butterfly) {
-  const dx = Math.abs(butterfly.x - lastLoggedPosition.x);
-  const dy = Math.abs(butterfly.y - lastLoggedPosition.y);
-  return dx > LOG_THRESHOLD || dy > LOG_THRESHOLD;
-}
 
 export function updateButterfly(butterfly, mouseX, mouseY) {
     const currentTime = Date.now();
@@ -140,7 +131,6 @@ function handleButterflyFlying(butterfly) {
 
     if (butterfly.targetElement) {
         const rect = butterfly.targetElement.getBoundingClientRect();
-        const canvasRect = gardenCanvas.getBoundingClientRect();
         
         // Get target position first
         const targetPos = getElementPagePosition(butterfly.targetElement, gardenCanvas);
@@ -179,35 +169,6 @@ function handleButterflyFlying(butterfly) {
     }
 }
 
-function handleButterflySpawning(butterfly) {
-  // Gradually move into screen using buffer zone from config
-  const EDGE_BUFFER = butterfly_config.EDGE_BUFFER || 50; // Default to 50 if not set
-  
-  const targetY =
-    butterfly.y < 0
-      ? EDGE_BUFFER
-      : butterfly.y > gardenCanvas.height
-      ? gardenCanvas.height - EDGE_BUFFER
-      : butterfly.y;
-  const targetX =
-    butterfly.x < 0
-      ? EDGE_BUFFER
-      : butterfly.x > gardenCanvas.width
-      ? gardenCanvas.width - EDGE_BUFFER
-      : butterfly.x;
-
-  butterfly.x += (targetX - butterfly.x) * 0.05;
-  butterfly.y += (targetY - butterfly.y) * 0.05;
-
-  // Transition to flying state when close enough to target
-  if (
-    Math.abs(butterfly.x - targetX) < 5 &&
-    Math.abs(butterfly.y - targetY) < 5
-  ) {
-    butterfly.state = butterfly_config.STATES.FLYING;
-  }
-}
-
 function releaseTarget(butterfly) {
     if (butterfly.targetElement && butterfly.state !== butterfly_config.STATES.LEAVING) {
         butterfly.targetElement.classList.remove("targeted");
@@ -233,10 +194,9 @@ function handleButterflyHovering(butterfly, currentTime) {
     
     // Update hovering position with gentle wandering
     const hoverTime = currentTime / 1000;
-    const wanderRadius = 15;  // Smaller radius for more stable hovering
     
-    butterfly.hoveringPosition.x = targetPosition.x + Math.sin(hoverTime * 1.5) * wanderRadius;
-    butterfly.hoveringPosition.y = targetPosition.y + Math.cos(hoverTime * 2) * wanderRadius;
+    butterfly.hoveringPosition.x = targetPosition.x + Math.sin(hoverTime * 1.5) * butterfly_config.WANDER_RADIUS;
+    butterfly.hoveringPosition.y = targetPosition.y + Math.cos(hoverTime * 2) * butterfly_config.WANDER_RADIUS;
     
     // Update butterfly position with smooth movement
     butterfly.x += (butterfly.hoveringPosition.x - butterfly.x) * butterfly_config.HOVER.TRANSITION_SPEED;
@@ -254,27 +214,6 @@ function handleButterflyHovering(butterfly, currentTime) {
             Math.random() * (butterfly_config.HOVER.MAX_DURATION - butterfly_config.HOVER.MIN_DURATION);
     } else if (currentTime - butterfly.hoveringStartTime > butterfly.currentHoverDuration) {
         releaseTarget(butterfly);
-    }
-}
-
-function handleButterflyScared(butterfly, mouseX, mouseY, currentTime) {
-    console.log('Butterfly is scared!');
-    console.log(`Mouse position: (${mouseX}, ${mouseY})`);
-    console.log(`Butterfly position: (${butterfly.x}, ${butterfly.y})`);
-
-    const dx = butterfly.x - mouseX;
-    const dy = butterfly.y - mouseY;
-    const distance = Math.hypot(dx, dy);
-
-    console.log(`Distance from mouse: ${distance}`);
-
-    if (distance > 0) {
-        const escapeAngle = Math.atan2(dy, dx) + ((Math.random() - 0.5) * Math.PI) / 6;
-        butterfly.velocity.x = Math.cos(escapeAngle) * butterfly_config.ESCAPE_SPEED;
-        butterfly.velocity.y = Math.sin(escapeAngle) * butterfly_config.ESCAPE_SPEED;
-        console.log(`Escape velocity: (${butterfly.velocity.x.toFixed(2)}, ${butterfly.velocity.y.toFixed(2)})`);
-        // Set the butterfly's angle to match escape direction
-        butterfly.angle = escapeAngle + Math.PI; // Add PI to face away from mouse
     }
 }
 
@@ -350,27 +289,20 @@ export { spawnButterfly, scheduleNextSpawn };
 
 export function drawButterfly(ctx, butterfly) {
     ctx.save();
-    
-    // Get relative position for drawing
-    const relativePos = getRelativeButterflyPosition(butterfly, gardenCanvas);
         
     if (!butterfly.color) {
         butterfly.color = '#FFFFFF'; // Default to white or any other default color
     }
 
-    if (butterfly.state === butterfly_config.STATES.SCARED) {
-        const flashSpeed = 0.02;
-        const flashIntensity = Math.abs(Math.sin(Date.now() * flashSpeed));
-        
-        const baseColor = butterfly.originalColor; // Use originalColor or fallback to current colo
+    if (butterfly.state === butterfly_config.STATES.SCARED) {        
+        const baseColor = butterfly.originalColor; // Use originalColor or fallback to current color
         const r = parseInt(baseColor.slice(1, 3), 16);
         const g = parseInt(baseColor.slice(3, 5), 16);
         const b = parseInt(baseColor.slice(5, 7), 16);
         
-        const angerTint = 0.8;
-        const newR = Math.min(255, r + (255 - r) * angerTint);
-        const newG = Math.max(0, g - g * angerTint * 0.5);
-        const newB = Math.max(0, b - b * angerTint * 0.5);
+        const newR = Math.min(255, r + (255 - r) * butterfly_config.ANGER_TINT);
+        const newG = Math.max(0, g - g * butterfly_config.ANGER_TINT * 0.5);
+        const newB = Math.max(0, b - b * butterfly_config.ANGER_TINT * 0.5);
         
         butterfly.color = `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`;
     } else {
@@ -476,8 +408,7 @@ export function drawButterfly(ctx, butterfly) {
         ctx.font = 'bold 16px Comic Sans MS, cursive';
         
         // Flash effect with softer red
-        const flashSpeed = 0.015;
-        const flashIntensity = Math.sin(Date.now() * flashSpeed);
+        const flashIntensity = Math.sin(Date.now() * butterfly_config.FLASH_SPEED);
         
         if (flashIntensity > 0) {
             ctx.fillStyle = '#ff6b6b';
@@ -621,12 +552,6 @@ function findNewTarget() {
     }
     
     return null;
-}
-
-// In your debug toggle function
-function toggleDebug() {
-    isDebugMode = !isDebugMode;
-    document.body.classList.toggle('debug-mode', isDebugMode);
 }
 
 function handleMouseInteraction(butterfly, mouseX, mouseY) {

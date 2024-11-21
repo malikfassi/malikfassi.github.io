@@ -6,27 +6,10 @@ export function toggleDebug() {
 
 export const color_config = {
     BUTTERFLY_COLORS: [
-        // Cute, contrasted pastels
-        '#FF99B4',  // Baby Pink
-        '#94D8E5',  // Sky Blue
-        '#D5A6E6',  // Sweet Lavender
-        '#FFB182',  // Soft Peach
-        '#82C7FF',  // Clear Blue
-        '#B8E6B8',  // Mint Leaf
-        '#FFB5A6',  // Coral Pink
-        '#C5B3FF',  // Periwinkle
-        '#FFA6D1',  // Cotton Candy
-        '#A6E6A6',  // Fresh Green
-        '#A6D9D9',  // Ocean Mist
-        '#FFB2CC',  // Rose Petal
-        '#A6E6D9',  // Seafoam
-        '#D1B3FF',  // Lilac Dream
-        '#FFB999',  // Apricot
-        '#B8E6A6',  // Spring Green
-        '#E6B3E6',  // Orchid Bloom
-        '#FFB2B2',  // Strawberry Milk
-        '#CCE6A6',  // Lime Sorbet
-        '#E6B3FF'   // Sweet Mauve
+        '#FF99B4', '#94D8E5', '#D5A6E6', '#FFB182', '#82C7FF',
+        '#B8E6B8', '#FFB5A6', '#C5B3FF', '#FFA6D1', '#A6E6A6',
+        '#A6D9D9', '#FFB2CC', '#A6E6D9', '#D1B3FF', '#FFB999',
+        '#B8E6A6', '#E6B3E6', '#FFB2B2', '#CCE6A6', '#E6B3FF'
     ],
     DEBUG: {
         TEXT: 'rgba(0, 0, 0, 0.8)',
@@ -63,7 +46,7 @@ export const wind_config = {
 };
 
 export const butterfly_config = {
-    FEAR_RADIUS: 200,
+    FEAR_RADIUS: 100,
     ESCAPE_SPEED: 8,
     SCARED_DURATION: 500,
     STATES: {
@@ -78,7 +61,7 @@ export const butterfly_config = {
     MAX_SPEED: 5,
     MIN_SPEED: 0.5,
     SCROLL_ADJUSTMENT_SPEED: 1.5,
-    SAFE_DISTANCE: 200,
+    SAFE_DISTANCE: 150,
     INTERACTION_RADIUS: 50,
     SPAWN_CONFIG: {
         MIN_INTERVAL: 100,
@@ -94,9 +77,9 @@ export const butterfly_config = {
     EDGE_BUFFER: 100,
     HOVER_THRESHOLD: 15,
     WANDER: {
-        AMPLITUDE: 0.7,         // Overall wandering strength
-        TARGET_WEIGHT: 0.6,     // Balance between wandering and target-seeking
-        DISTANCE_FACTOR: 250,   // How distance affects wandering
+        AMPLITUDE: 0.7,
+        TARGET_WEIGHT: 0.6,
+        DISTANCE_FACTOR: 250,
         MIN_SPEED_MULT: 0.8,
         MAX_SPEED_MULT: 1.1
     },
@@ -105,8 +88,19 @@ export const butterfly_config = {
         AMPLITUDE: 2
     },
     HOVER: {
-        MIN_DURATION: 5000,  // 5 seconds minimum
-        MAX_DURATION: 8000,  // 8 seconds maximum
+        MIN_DURATION: 5000,
+        MAX_DURATION: 8000,
         TRANSITION_SPEED: 0.1
-    }
+    },
+    LOG_THRESHOLD: 50,
+    WANDER_RADIUS: 15,
+    FLASH_SPEED: 0.02,
+    ANGER_TINT: 0.8
+};
+
+export const heatmap_config = {
+    CELL_SIZE: 2,
+    INFLUENCE_RADIUS: 10,
+    FADE_RATE: 0.98,
+    INTENSITY_MULTIPLIER: 20
 };
