@@ -1,10 +1,10 @@
 import { color_config, butterfly_config } from "./config.js";
-import { gardenCanvas } from "./garden.js";
+import { gardenCanvas, mouseState } from "./garden.js";
 import { getElementPagePosition } from './utils.js';
 
 export let butterflies = [];
 
-export function updateButterfly(butterfly, mouseX, mouseY) {
+export function updateButterfly(butterfly) {
     const currentTime = Date.now();
     
     // Store previous position for direction calculation
@@ -15,7 +15,7 @@ export function updateButterfly(butterfly, mouseX, mouseY) {
     handleScroll(butterfly);
     
     // Check mouse interaction before any other state updates
-    handleMouseInteraction(butterfly, mouseX, mouseY);
+    handleMouseInteraction(butterfly, mouseState.x, mouseState.y);
     
     // Handle other states if not scared
     if (butterfly.state !== butterfly_config.STATES.SCARED) {
@@ -469,10 +469,6 @@ function handleButterflyLeaving(butterfly) {
         
         edgeTarget.textContent = `Leaving via ${nearestEdge.edge} edge`;
         butterfly.targetElement = edgeTarget;
-        
-        if (butterfly_config.DEBUG) {
-            console.log(`Butterfly leaving towards ${nearestEdge.edge} edge at (${nearestEdge.x}, ${nearestEdge.y})`);
-        }
     }
 
     // Move towards the edge target
@@ -614,56 +610,6 @@ function handleMouseInteraction(butterfly, mouseX, mouseY) {
     return false;
 }
 
-function calculateSafePath(butterfly, targetPos, mouseX, mouseY) {
-    // Calculate direct path to target
-    const dx = targetPos.x - butterfly.x;
-    const dy = targetPos.y - butterfly.y;
-    const directAngle = Math.atan2(dy, dx);
-    
-    // Calculate angle to mouse
-    const mouseAngle = Math.atan2(butterfly.y - mouseY, butterfly.x - mouseX);
-    
-    // If mouse is between butterfly and target, calculate detour
-    const angleDiff = Math.abs(directAngle - mouseAngle);
-    if (angleDiff < Math.PI * 0.5) {
-        // Add deviation to avoid mouse
-        const detourAngle = directAngle + (Math.PI * 0.3 * Math.sign(Math.sin(mouseAngle)));
-        return {
-            x: Math.cos(detourAngle) * butterfly_config.NORMAL_SPEED,
-            y: Math.sin(detourAngle) * butterfly_config.NORMAL_SPEED
-        };
-    }
-    
-    // Otherwise proceed directly to target
-    return {
-        x: dx * 0.1,
-        y: dy * 0.1
-    };
-}
-
-function findSafeTarget(butterfly, mouseX, mouseY) {
-    const allTargets = [...document.querySelectorAll(".important-word:not(.targeted)")];
-    if (allTargets.length === 0) return;
-    
-    // Score targets based on distance from mouse and current position
-    const scoredTargets = allTargets.map(target => {
-        const pos = getElementPagePosition(target, gardenCanvas);
-        const distanceToMouse = Math.hypot(pos.x - mouseX, pos.y - mouseY);
-        const distanceToButterfly = Math.hypot(pos.x - butterfly.x, pos.y - butterfly.y);
-        
-        return {
-            target,
-            score: distanceToMouse - distanceToButterfly * 0.5 // Prefer targets far from mouse
-        };
-    });
-    
-    // Choose one of the top 3 safest targets randomly
-    scoredTargets.sort((a, b) => b.score - a.score);
-    const safeTarget = scoredTargets[Math.floor(Math.random() * Math.min(3, scoredTargets.length))].target;
-    
-    butterfly.targetElement = safeTarget;
-    safeTarget.classList.add("targeted");
-}
 
 function colorWord(element, butterfly) {
     const isHovering = butterfly.state === butterfly_config.STATES.HOVERING;
@@ -674,15 +620,9 @@ function colorWord(element, butterfly) {
     }
 }
 
-// Helper function to add red tint
-function adjustColorToRed(baseColor, intensity) {
-    const r = parseInt(baseColor.slice(1,3), 16);
-    const g = parseInt(baseColor.slice(3,5), 16);
-    const b = parseInt(baseColor.slice(5,7), 16);
-    
-    const newR = Math.min(255, r + (255 - r) * intensity);
-    const newG = Math.max(0, g - g * intensity * 0.5);
-    const newB = Math.max(0, b - b * intensity * 0.5);
-    
-    return `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`;
+export function catchButterfly(butterfly, index) {
+    console.log(`Caught butterfly at position: (${butterfly.x}, ${butterfly.y})`);
+    butterflies.splice(index, 1);
+    caughtButterfliesCount++;
+    updateCaughtButterfliesDisplay();
 }
