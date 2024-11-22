@@ -1,6 +1,7 @@
 export let isDebugMode = false;
 export function toggleDebug() {
     isDebugMode = !isDebugMode;
+    document.body.classList.toggle('debug-mode', isDebugMode);
     return isDebugMode;
 }
 

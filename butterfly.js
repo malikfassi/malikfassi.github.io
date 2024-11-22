@@ -57,9 +57,9 @@ export function updateButterfly(butterfly) {
         butterfly.angle += angleDiff * 0.1;
     }
 
-    // Apply friction
-    butterfly.velocity.x *= 0.98;
-    butterfly.velocity.y *= 0.98;
+    // Apply friction with a smaller decay factor
+    butterfly.velocity.x *= 0.99; // Slightly reduce friction
+    butterfly.velocity.y *= 0.99;
 
     butterfly.lastX = butterfly.x;
     butterfly.lastY = butterfly.y;
@@ -135,6 +135,8 @@ function handleButterflyFlying(butterfly) {
         // Get target position first
         const targetPos = getElementPagePosition(butterfly.targetElement, gardenCanvas);
         
+        butterfly.targetX = targetPos.x
+        butterfly.targetY = targetPos.y
         // Calculate distance to target
         const dx = targetPos.x - butterfly.x;
         const dy = targetPos.y - butterfly.y;

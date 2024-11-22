@@ -16,6 +16,9 @@ import {
 } from "./butterfly.js";
 import { isDebugMode, toggleDebug } from './config.js';
 
+// Declare and initialize caughtButterfliesCount
+let caughtButterfliesCount = 0;
+
 // Garden state and elements
 export let isGardenMode = false;
 export let gardenCanvas = null;
@@ -153,6 +156,9 @@ function animateGarden() {
         drawButterfly(ctx, butterfly);
     });
 
+    // Update the butterfly states count display
+    updateButterflyStatesCounts();
+
     if (isDebugMode) {
         drawDebugInfo(ctx);
         drawCursorInfo(ctx);
@@ -163,29 +169,24 @@ function animateGarden() {
 
 // Single mouse move handler that updates all necessary state
 function handleMouseMove(event) {
-    console.log('handleMouseMove', event);
     if (!gardenCanvas || mouseState.isTouch) return;
     
     const rect = gardenCanvas.getBoundingClientRect();
     updateMousePosition(event.clientX, event.clientY, rect);
     
     if (mouseState.isMoving) {
-        checkButterflyInteractions();
+        handleInteraction(mouseState.x, mouseState.y);
     }
 }
 
-function checkButterflyInteractions() {
+function handleInteraction(x, y) {
     butterflies.forEach((butterfly, index) => {
-        const distanceToButterfly = Math.hypot(
-            butterfly.x - mouseState.x, 
-            butterfly.y - mouseState.y
-        );
-        
-        // Fast movement catch mechanic
-        if (mouseState.speed > butterfly_config.CATCH_SPEED_THRESHOLD && 
-            distanceToButterfly < butterfly_config.SIZE) {
-            console.log(`Caught butterfly with speed: ${mouseState.speed}`);
-            catchButterfly(butterfly, index);
+        const distance = Math.hypot(butterfly.x - x, butterfly.y - y);
+        if (distance < butterfly_config.SIZE) {
+            butterflies.splice(index, 1);
+            caughtButterfliesCount++;
+            updateCaughtButterfliesDisplay();
+            updateButterflyStatesCounts();
         }
     });
 }
@@ -198,40 +199,14 @@ function initializeMouseTracking() {
     console.log('Attaching mousemove event listener to canvas:', gardenCanvas);
 
     // Add mouse and touch listeners with passive option
-    console.log('1');   
     gardenCanvas.addEventListener('mousemove', handleMouseMove);
-    console.log('2');
     gardenCanvas.addEventListener('touchstart', handleTouchStart, { passive: true });
-    console.log('3');
     gardenCanvas.addEventListener('touchmove', handleTouchMove, { passive: true });
-    console.log('4');
     gardenCanvas.addEventListener('touchend', handleTouchEnd);
-    console.log('5');
     gardenCanvas.addEventListener('touchcancel', handleTouchEnd);
     
     // Initialize state
     mouseState.lastTime = Date.now();
-}
-
-// Initialize state
-mouseState.lastTime = Date.now();
-
-function handleCanvasClick(event) {
-    // Get the canvas position
-    const canvasRect = gardenCanvas.getBoundingClientRect();
-    
-    // Calculate click position relative to the canvas
-    const clickX = event.pageX - canvasRect.left;
-    const clickY = event.pageY - canvasRect.top;
-
-    butterflies.forEach((butterfly, index) => {
-        const distance = Math.hypot(butterfly.x - clickX, butterfly.y - clickY);
-        if (distance < butterfly_config.SIZE) {
-            butterflies.splice(index, 1);
-            caughtButterfliesCount++;
-            updateCaughtButterfliesDisplay();
-        }
-    });
 }
 
 function updateCaughtButterfliesDisplay() {
@@ -244,126 +219,90 @@ function updateCaughtButterfliesDisplay() {
 function drawDebugInfo(ctx) {
     if (!isDebugMode) return;
 
-    // Initialize state counts from butterfly config states
-    const stateCounts = {};
-    Object.values(butterfly_config.STATES).forEach(state => {
-        stateCounts[state] = 0;
-    });
-
+    // Draw lines to targets for each butterfly
     butterflies.forEach(butterfly => {
-        stateCounts[butterfly.state] = (stateCounts[butterfly.state] || 0) + 1;
-    });
-
-    // Calculate total butterflies
-    const totalButterflies = butterflies.length;
-
-    // Add cursor coordinates to the debug info
-    const cursorInfo = `Cursor: (${Math.round(mouseState.x)}, ${Math.round(mouseState.y)})`;
-
-    // Draw state counts and cursor info on canvas
-    ctx.save();
-    const stateText = Object.entries(stateCounts)
-        .map(([state, count]) => `${state}: ${count}`)
-        .join(' | ');
-    const fullText = `Total: ${totalButterflies} | ${stateText} | ${cursorInfo}`;
-
-    // Calculate dimensions
-    ctx.font = '14px Arial';
-    const textWidth = ctx.measureText(fullText).width;
-    const padding = 10;
-    const boxWidth = textWidth + (padding * 2);
-    const boxHeight = 25;
-    const cornerRadius = 8;
-
-    // Position at top center of canvas
-    const x = (gardenCanvas.width - boxWidth) / 2;
-    const y = 10;
-
-    // Draw background
-    ctx.fillStyle = color_config.DEBUG.BOX_BG;
-    ctx.beginPath();
-    ctx.roundRect(x, y, boxWidth, boxHeight, cornerRadius);
-    ctx.fill();
-
-    // Draw border
-    ctx.strokeStyle = color_config.DEBUG.BOX_BORDER;
-    ctx.beginPath();
-    ctx.roundRect(x, y, boxWidth, boxHeight, cornerRadius);
-    ctx.stroke();
-
-    // Draw text
-    ctx.fillStyle = color_config.DEBUG.TEXT;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(fullText, x + boxWidth / 2, y + boxHeight / 2);
-    ctx.restore();
-
-    // Keep all existing debug drawing code
-    butterflies.forEach(butterfly => {
-        // Calculate positions first
-        const relativePos = getRelativeButterflyPosition(butterfly, gardenCanvas);
-        const screenX = butterfly.x;
-        const screenY = butterfly.y;
-        
-        // Calculate distance to cursor
-        const distanceToCursor = Math.hypot(butterfly.x - mouseState.x, butterfly.y - mouseState.y);
-        
-        // Draw line to target if it exists
-        if (butterfly.targetElement) {
-            const targetPos = getElementPagePosition(butterfly.targetElement, gardenCanvas);
-            ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)'; // Blue line with some transparency
-            ctx.beginPath();
-            ctx.moveTo(screenX, screenY);
-            ctx.lineTo(targetPos.x, targetPos.y);
-            ctx.stroke();
+        if (document.getElementById('showLineToTarget').checked) {  
+            drawLineToTarget(ctx, butterfly);
         }
+        drawButterflyDebugInfo(ctx, butterfly);
+    });
+}
 
-        // Draw background box first
-        ctx.save();
-        const lines = [
-            `State: ${butterfly.state}`,
-            `Words Hovered: ${butterfly.wordsHovered || 0}`,
-            `Target word: ${butterfly.targetElement?.textContent}`,
-            `Pos: (${Math.round(screenX)}, ${Math.round(screenY)})`,
-            `Distance to Cursor: ${Math.round(distanceToCursor)}`
-        ];
-        
-        // Add hover timer if hovering
+function drawLineToTarget(ctx, butterfly) {
+    if (butterfly.targetElement) {
+        const targetPos = getElementPagePosition(butterfly.targetElement, gardenCanvas);
+        ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)'; // Blue line with some transparency
+        ctx.beginPath();
+        ctx.moveTo(butterfly.x, butterfly.y);
+        ctx.lineTo(targetPos.x, targetPos.y);
+        ctx.stroke();
+    }
+}
+
+function drawButterflyDebugInfo(ctx, butterfly) {
+    const screenX = butterfly.x;
+    const screenY = butterfly.y;
+    const distanceToCursor = Math.hypot(butterfly.x - mouseState.x, butterfly.y - mouseState.y);
+
+    ctx.save();
+    const lines = [];
+
+    if (document.getElementById('showState').checked) {
+        lines.push(`State: ${butterfly.state}`);
+    }
+    if (document.getElementById('showWordsHovered').checked) {
+        lines.push(`Words Hovered: ${butterfly.wordsHovered || 0}`);
+    }
+    if (document.getElementById('showTargetWord').checked) {
+        lines.push(`Target word: ${butterfly.targetElement?.textContent}`);
+    }
+    if (document.getElementById('showTargetPos').checked) {
+        lines.push(`Target Pos: (${Math.round(butterfly.targetX)}, ${Math.round(butterfly.targetY)})`);
+    }
+    if (document.getElementById('showButterflyPos').checked) {
+        lines.push(`Butterfly Pos: (${Math.round(screenX)}, ${Math.round(screenY)})`);
+    }
+    if (document.getElementById('showDistanceToCursor').checked) {
+        lines.push(`Distance to Cursor: ${Math.round(distanceToCursor)}`);
+    }
+    if (document.getElementById('showVelocity').checked) {
+        lines.push(`Velocity: ${butterfly.velocity.x.toFixed(3)}, ${butterfly.velocity.y.toFixed(3)}`);
+    }
+    if (document.getElementById('showHoveringDuration').checked) {
         if (butterfly.state === butterfly_config.STATES.HOVERING && butterfly.hoveringStartTime) {
             const hoverTime = Date.now() - butterfly.hoveringStartTime;
             const remainingTime = Math.max(0, (butterfly.currentHoverDuration - hoverTime) / 1000).toFixed(1);
             lines.push(`Hover Time: ${remainingTime}s`);
         }
-        
-        // Calculate box dimensions
-        const lineHeight = 15;
-        const padding = 10; // Increased padding
-        const cornerRadius = 8; // Added corner radius
-        ctx.font = '12px Arial';
-        const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
-        const boxWidth = maxWidth + (padding * 2);
-        const boxHeight = (lines.length * lineHeight) + (padding * 2);
-        
-        // Draw rounded rectangle background
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.beginPath();
-        ctx.roundRect(screenX + 20, screenY - 35, boxWidth, boxHeight, cornerRadius);
-        ctx.fill();
-        
-        // Draw border
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.beginPath();
-        ctx.roundRect(screenX + 20, screenY - 35, boxWidth, boxHeight, cornerRadius);
-        ctx.stroke();
-        
-        // Draw text
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        lines.forEach((line, index) => {
-            ctx.fillText(line, screenX + 20 + padding, screenY - 35 + padding + (lineHeight * index));
-        });
-        
-        ctx.restore();
-    }); 
+    }
+
+    const lineHeight = 15;
+    const padding = 10;
+    const cornerRadius = 8;
+    ctx.font = '12px Arial';
+    const maxWidth = Math.max(...lines.map(line => ctx.measureText(line).width));
+    const boxWidth = maxWidth + (padding * 2);
+    const boxHeight = (lines.length * lineHeight) + (padding * 2);
+
+    // Draw background with padding
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.beginPath();
+    ctx.roundRect(screenX + 20, screenY - 35, boxWidth, boxHeight, cornerRadius);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+    ctx.beginPath();
+    ctx.roundRect(screenX + 20, screenY - 35, boxWidth, boxHeight, cornerRadius);
+    ctx.stroke();
+
+    // Draw text with padding
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    lines.forEach((line, index) => {
+        ctx.fillText(line, screenX + 20 + padding, screenY - 35 + padding + (lineHeight * index));
+    });
+
+    ctx.restore();
 }
 
 function drawCursorInfo(ctx) {
@@ -404,6 +343,7 @@ function handleTouchStart(event) {
     mouseState.touchId = touch.identifier;
     
     updateMousePosition(touch.clientX, touch.clientY, rect);
+    handleInteraction(mouseState.x, mouseState.y);
 }
 
 function handleTouchMove(event) {
@@ -417,6 +357,7 @@ function handleTouchMove(event) {
     
     const rect = gardenCanvas.getBoundingClientRect();
     updateMousePosition(touch.clientX, touch.clientY, rect);
+    handleInteraction(mouseState.x, mouseState.y);
 }
 
 function handleTouchEnd() {
@@ -433,12 +374,8 @@ function updateMousePosition(clientX, clientY, rect) {
     mouseState.lastY = mouseState.y;
     
     // Calculate new position relative to canvas and add scroll offset
-    mouseState.x = clientX - rect.left;
-    mouseState.y = clientY - rect.top;
-    
-    // Add scroll offset to get absolute position
-    mouseState.x += window.scrollX;
-    mouseState.y += window.scrollY;
+    mouseState.x = clientX - rect.left + window.scrollX;
+    mouseState.y = clientY - rect.top + window.scrollY;
     
     // Calculate movement speed
     const dx = mouseState.x - mouseState.lastX;
@@ -476,3 +413,56 @@ const observer = new ResizeObserver(() => {
     handleCanvasResize();
 });
 observer.observe(document.body);
+
+
+function updateButterflyStatesCounts() {
+    const stateCounts = {
+        FLYING: 0,
+        HOVERING: 0,
+        LEAVING: 0,
+        SCARED: 0
+    };
+
+    butterflies.forEach(butterfly => {
+        stateCounts[butterfly.state] = (stateCounts[butterfly.state] || 0) + 1;
+    });
+
+    const totalButterflies = butterflies.length;
+
+    const displayElement = document.getElementById('butterflyStatesCounts');
+    if (displayElement) {
+        displayElement.textContent = `Total: ${totalButterflies} | FLYING: ${stateCounts.FLYING} | HOVERING: ${stateCounts.HOVERING} | LEAVING: ${stateCounts.LEAVING} | SCARED: ${stateCounts.SCARED}`;
+        displayElement.style.display = showStatsCheckbox.checked ? 'block' : 'none';
+    }
+}
+
+document.getElementById('settingsButton').addEventListener('click', () => {
+    // Toggle settings container visibility
+    const settingsContainer = document.getElementById('settingsContainer');
+    settingsContainer.style.display = settingsContainer.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('settingsTitle').addEventListener('click', () => {
+    // Toggle settings content visibility
+    const settingsContent = document.getElementById('settingsContent');
+    settingsContent.style.display = settingsContent.style.display === 'none' ? 'block' : 'none';
+});
+
+const debugCheckbox = document.getElementById('debugMode');
+if (debugCheckbox) {
+    debugCheckbox.addEventListener('change', () => {
+        // Toggle debug mode
+        const debugEnabled = toggleDebug();
+        debugCheckbox.checked = debugEnabled;
+        console.log('Debug mode:', debugEnabled);
+    });
+}
+
+const showStatsCheckbox = document.getElementById('showStats');
+if (showStatsCheckbox) {
+    showStatsCheckbox.addEventListener('change', () => {
+        //toggle stats display
+        const displayElement = document.getElementById('butterflyStatesCounts');
+        displayElement.style.display = showStatsCheckbox.checked ? 'block' : 'none';
+    });
+}

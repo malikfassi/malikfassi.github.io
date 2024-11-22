@@ -59,16 +59,45 @@
             <p class="date"><span class="important-word">Université libre de Bruxelles</span> • <span class="important-word">2011 – 2013</span></p>
         </section>
     </div>
-    <div style="position: fixed; top: 10px; right: 10px; z-index: 1000; display: flex; gap: 10px;">
-        <div id="butterflyStatesCounts" style="background: white; padding: 5px; border-radius: 5px;">
-            FLYING: 0 | HOVERING: 0 | LEAVING: 0 | SCARED: 0
-        </div>
+    <div style="position: fixed; top: 10px; left: 10px; z-index: 1000;">
         <div id="caughtButterfliesCount" style="background: white; padding: 5px; border-radius: 5px;">
             Butterflies Caught: 0
         </div>
-        <button id="debugToggle" style="background: #333; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
-            Toggle Debug
-        </button>
+    </div>
+
+    <div style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+        <div id="butterflyStatesCounts" style="display: none; background: white; padding: 5px; border-radius: 5px; margin-top: 10px;">
+            <!-- Stats will be dynamically updated here -->
+        </div>
+        <div id="settingsButton" style="background: #333; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+            Settings
+        </div>
+        <div id="settingsContainer" style="display: none; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin-top: 10px;">
+            <div id="toggleDebugSection">
+                <label><input type="checkbox" id="debugMode"> Toggle Debug Mode</label>
+            </div>
+            <div id="showStatsSection">
+                <label><input type="checkbox" id="showStats"> Show Stats</label>
+            </div>
+            <div id="configureDebugSection">
+                <div id="settingsTitle" style="cursor: pointer; font-weight: bold;">Configure Debug Mode</div>
+                <div id="settingsContent" style="display: none; margin-top: 10px;">
+                    <label><input type="checkbox" id="showState" checked> Show State</label><br>
+                    <label><input type="checkbox" id="showWordsHovered" checked> Show Words Hovered</label><br>
+                    <label><input type="checkbox" id="showTargetWord" checked> Show Target Word</label><br>
+                    <label><input type="checkbox" id="showTargetPos" checked> Show Target Position</label><br>
+                    <label><input type="checkbox" id="showButterflyPos" checked> Show Butterfly Position</label><br>
+                    <label><input type="checkbox" id="showDistanceToCursor" checked> Show Distance to Cursor</label><br>
+                    <label><input type="checkbox" id="showVelocity" checked> Show Velocity</label><br>
+                    <label><input type="checkbox" id="showHoveringDuration" checked> Show Hovering Duration</label>
+                    <label><input type="checkbox" id="showLineToTarget" checked> Show Line to Target</label>
+                </div>
+            </div>
+            <div id="configureGameSection">
+                <div style="font-weight: bold;">Configure Game</div>
+                <!-- Add game configuration options here -->
+            </div>
+        </div>
     </div>
     <script type="module" src="config.js"></script>
     <script type="module" src="garden.js"></script>
