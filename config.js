@@ -105,3 +105,16 @@ export const heatmap_config = {
     FADE_RATE: 0.98,
     INTENSITY_MULTIPLIER: 20
 };
+
+export const disney_color_palette = [
+    '#FF6F61', // Coral
+    '#6B5B95', // Purple
+    '#88B04B', // Green
+    '#F7CAC9', // Pink
+    '#92A8D1', // Blue
+    '#955251', // Brown
+    '#B565A7', // Lavender
+    '#009B77', // Teal
+    '#DD4124', // Red
+    '#D65076'  // Magenta
+];

@@ -1,7 +1,7 @@
 import { color_config, butterfly_config } from "./config.js";
-import { gardenCanvas, mouseState } from "./garden.js";
+import { gardenCanvas, mouseState, incrementCaughtButterfliesCount } from "./garden.js";
 import { getElementPagePosition } from './utils.js';
-import { incrementCaughtButterfliesCount } from './garden.js';
+import { createParticles } from './particle.js';
 
 export let butterflies = [];
 
@@ -30,6 +30,12 @@ export function updateButterfly(butterfly) {
             case butterfly_config.STATES.LEAVING:
                 handleButterflyLeaving(butterfly);
                 break;
+        }
+    } else {
+        // If scared, check if it's time to transition back
+        if (Date.now() - butterfly.scaredStartTime > butterfly_config.SCARED_DURATION) {
+            butterfly.state = butterfly_config.STATES.FLYING;
+            butterfly.scaredStartTime = null;
         }
     }
 
@@ -586,7 +592,9 @@ function enterScaredState(butterfly, relativePos, distanceToCursor) {
 
     // Check if the scared duration has passed
     if (Date.now() - butterfly.scaredStartTime > butterfly_config.SCARED_DURATION) {
-        butterfly.state = butterfly_config.STATES.FLYING; // Transition back to flying
+        // Transition back to previous state
+        butterfly.state = butterfly.previousState || butterfly_config.STATES.FLYING;
+        butterfly.scaredStartTime = null; // Reset scared start time
     }
 }
 
@@ -601,8 +609,11 @@ function colorWord(element, butterfly) {
 
 export function catchButterfly(butterfly, index) {
     console.log(`Caught butterfly at position: (${butterfly.x}, ${butterfly.y})`);
-    butterflies.splice(index, 1);
     incrementCaughtButterfliesCount();
+    butterflies.splice(index, 1);
+    releaseTarget(butterfly);
+    // Create particles at the butterfly's position
+    createParticles(butterfly.x, butterfly.y);
 }
 
 function calculateScaredColor(butterfly) {

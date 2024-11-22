@@ -1,4 +1,4 @@
-import { color_config, butterfly_config } from "./config.js";
+import { color_config, butterfly_config, disney_color_palette } from "./config.js";
 import { getElementPagePosition, drawTextBox, calculateRelativePosition } from "./utils.js";
 import {
   updateButterfly,
@@ -10,6 +10,7 @@ import {
   setAbsoluteButterflyPosition
 } from "./butterfly.js";
 import { isDebugMode, toggleDebug } from './config.js';
+import { updateParticles } from './particle.js';
 
 // Declare and initialize caughtButterfliesCount
 export let caughtButterfliesCount = 0;
@@ -149,6 +150,9 @@ function animateGarden() {
         drawButterfly(ctx, butterfly);
     });
 
+    // Update and draw particles
+    updateParticles(ctx);
+
     // Update the butterfly states count display
     updateButterflyStatesCounts();
 
@@ -203,12 +207,28 @@ function initializeMouseTracking() {
 }
 
 export function updateCaughtButterfliesDisplay() {
-  const displayElement = document.getElementById('caughtButterfliesCount');
-  if (displayElement) {
-    displayElement.textContent = `Butterflies Caught: ${caughtButterfliesCount}`;
-  } else {
-    console.error("Caught butterflies display element not found.");
-  }
+    const displayElement = document.getElementById('caughtButterfliesCount');
+    if (displayElement) {
+        displayElement.textContent = `Butterflies Caught: ${caughtButterfliesCount}`;
+    } else {
+        console.error("Caught butterflies display element not found.");
+    }
+
+    // Gradually make the background visible when 5 butterflies are caught
+    const backgroundElement = document.getElementById('background');
+    if (caughtButterfliesCount >= 5 && backgroundElement) {
+        backgroundElement.style.opacity = 1; // Make background visible
+
+        // Change color of all existing butterflies
+        butterflies.forEach(butterfly => {
+            const newColor = disney_color_palette[Math.floor(Math.random() * disney_color_palette.length)];
+            butterfly.color = newColor;
+            butterfly.originalColor = newColor;
+        });
+
+        // Update color configuration for new butterflies
+        color_config.BUTTERFLY_COLORS = disney_color_palette;
+    }
 }
 
 function drawDebugInfo(ctx) {
