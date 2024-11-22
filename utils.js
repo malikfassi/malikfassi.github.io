@@ -55,3 +55,48 @@ export function hslToHex({ h, s, l }) {
     };
     return `#${f(0)}${f(8)}${f(4)}`;
 }
+
+export function calculateRelativePosition(mouseX, mouseY, gardenCanvas) {
+    const canvasRect = gardenCanvas.getBoundingClientRect();
+    const viewportX = mouseX + window.scrollX;
+    const viewportY = mouseY + window.scrollY;
+    return {
+        x: viewportX - canvasRect.left,
+        y: viewportY - canvasRect.top
+    };
+}
+
+export function calculateDistance(x1, y1, x2, y2) {
+    return Math.hypot(x2 - x1, y2 - y1);
+}
+
+export function updateMouseState(clientX, clientY, canvas) {
+    const { x, y } = calculateRelativePosition(clientX, clientY, canvas);
+    mouseState.lastX = mouseState.x;
+    mouseState.lastY = mouseState.y;
+    mouseState.x = x;
+    mouseState.y = y;
+}
+
+export function drawTextBox(ctx, text, x, y, padding, cornerRadius, bgColor, borderColor, textColor) {
+    ctx.font = '12px monospace';
+    const textWidth = ctx.measureText(text).width;
+    const boxWidth = textWidth + (padding * 2);
+    const boxHeight = 20;
+
+    // Draw background
+    ctx.fillStyle = bgColor;
+    ctx.beginPath();
+    ctx.roundRect(x, y, boxWidth, boxHeight, cornerRadius);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = borderColor;
+    ctx.beginPath();
+    ctx.roundRect(x, y, boxWidth, boxHeight, cornerRadius);
+    ctx.stroke();
+
+    // Draw text
+    ctx.fillStyle = textColor;
+    ctx.fillText(text, x + padding, y + boxHeight / 2 + 4); // Adjust for text baseline
+}

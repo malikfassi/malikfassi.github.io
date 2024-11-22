@@ -48,8 +48,11 @@ export const wind_config = {
 
 export const butterfly_config = {
     FEAR_RADIUS: 100,
-    ESCAPE_SPEED: 8,
-    SCARED_DURATION: 500,
+    ESCAPE_SPEED: 40,
+    PEACEFUL_SPEED: 5,
+    MAX_SPEED: 7,
+    MIN_SPEED: 3,
+    SCARED_DURATION: 2000,
     STATES: {
         FLYING: 'FLYING',
         HOVERING: 'HOVERING',
@@ -58,9 +61,6 @@ export const butterfly_config = {
     },
     SIZE: 15,
     MAX_COUNT: 40,
-    PEACEFUL_SPEED: 3,
-    MAX_SPEED: 5,
-    MIN_SPEED: 0.5,
     SCROLL_ADJUSTMENT_SPEED: 1.5,
     SAFE_DISTANCE: 150,
     INTERACTION_RADIUS: 50,

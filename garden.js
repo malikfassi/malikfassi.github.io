@@ -1,23 +1,18 @@
 import { color_config, butterfly_config } from "./config.js";
-import { plantSeed, updateFlower, flowers } from "./flower.js";
-import { getElementPagePosition } from "./utils.js";
-import {
-  updateWindParticles,
-  windParticles,
-  drawWindParticle,
-} from "./wind.js";
+import { getElementPagePosition, drawTextBox, calculateRelativePosition } from "./utils.js";
 import {
   updateButterfly,
   butterflies,
   scheduleNextSpawn,
   drawButterfly,
   getRelativeButterflyPosition,
-  catchButterfly
+  catchButterfly,
+  setAbsoluteButterflyPosition
 } from "./butterfly.js";
 import { isDebugMode, toggleDebug } from './config.js';
 
 // Declare and initialize caughtButterfliesCount
-let caughtButterfliesCount = 0;
+export let caughtButterfliesCount = 0;
 
 // Garden state and elements
 export let isGardenMode = false;
@@ -38,17 +33,27 @@ export const mouseState = {
     touchId: null
 };
 
+const INITIALIZATION_DELAY = 100; // Delay in milliseconds
+
 // Initialize garden when the DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
-    // Wait a small amount of time to ensure all elements are loaded
     setTimeout(() => {
         initializeGardenElements();
         activateGarden(); // Activate garden mode by default
-    }, 100);
-});
+    }, INITIALIZATION_DELAY);
+    
+    window.addEventListener("scroll", handleScrollUpdate);
+ });
 
 // Single initialization function
 function initializeGardenElements() {
+    setupCanvas();
+    handleCanvasResize();
+    initializeMouseTracking();
+    setupDebugToggle();
+}
+
+function setupCanvas() {
     gardenCanvas = document.getElementById("gardenCanvas");
     if (!gardenCanvas) {
         console.error("Creating canvas element");
@@ -57,19 +62,10 @@ function initializeGardenElements() {
         gardenCanvas.className = 'garden-canvas';
         document.body.appendChild(gardenCanvas);
     }
-
     ctx = gardenCanvas.getContext("2d");
-    
-    // Set up canvas size
-    handleCanvasResize();
-    
-    // Add single resize handler
-    window.addEventListener("resize", handleCanvasResize);
-    
-    // Initialize mouse tracking
-    initializeMouseTracking();
+}
 
-    // Add debug toggle
+function setupDebugToggle() {
     const debugToggle = document.getElementById('debugToggle');
     if (debugToggle) {
         debugToggle.addEventListener('click', () => {
@@ -80,18 +76,20 @@ function initializeGardenElements() {
     }
 }
 
-
 function handleCanvasResize() {
-    if (!gardenCanvas) return;
-    
-    // Get the full document width including any overflow
+    if (!gardenCanvas) {
+        console.error("Garden canvas is not initialized.");
+        return;
+    }
+
     const docWidth = Math.max(
+        document.body.scrollWidth,
+        document.body.offsetWidth,
         document.documentElement.clientWidth,
         document.documentElement.offsetWidth,
         document.documentElement.scrollWidth
     );
     
-    // Get the full document height
     const docHeight = Math.max(
         document.body.scrollHeight,
         document.body.offsetHeight,
@@ -100,9 +98,7 @@ function handleCanvasResize() {
         document.documentElement.offsetHeight
     );
 
-    // Only update and log if dimensions actually changed
     if (gardenCanvas.width !== docWidth || gardenCanvas.height !== docHeight) {
-        // Set canvas dimensions
         gardenCanvas.width = docWidth;
         gardenCanvas.height = docHeight;
 
@@ -117,6 +113,10 @@ function handleCanvasResize() {
             });
         }
     }
+
+    // Update mouse position on canvas resize
+    const rect = gardenCanvas.getBoundingClientRect();
+    updateMousePosition(mouseState.x, mouseState.y, rect);
 }
 
 export function activateGarden() {
@@ -143,13 +143,6 @@ function animateGarden() {
     const ctx = gardenCanvas.getContext('2d');
     ctx.clearRect(0, 0, gardenCanvas.width, gardenCanvas.height);
 
-    // Update and draw wind particles
-    updateWindParticles(gardenCanvas);
-    windParticles.forEach(particle => drawWindParticle(ctx, particle));
-
-    // Update and draw flowers
-    flowers.forEach(flower => updateFlower(flower, ctx));
-
     // Update and draw butterflies
     butterflies.forEach(butterfly => {
         updateButterfly(butterfly);
@@ -170,10 +163,10 @@ function animateGarden() {
 // Single mouse move handler that updates all necessary state
 function handleMouseMove(event) {
     if (!gardenCanvas || mouseState.isTouch) return;
-    
+    updateButterflyStatesCounts();
     const rect = gardenCanvas.getBoundingClientRect();
     updateMousePosition(event.clientX, event.clientY, rect);
-    
+    drawDebugInfo(ctx);
     if (mouseState.isMoving) {
         handleInteraction(mouseState.x, mouseState.y);
     }
@@ -183,13 +176,13 @@ function handleInteraction(x, y) {
     butterflies.forEach((butterfly, index) => {
         const distance = Math.hypot(butterfly.x - x, butterfly.y - y);
         if (distance < butterfly_config.SIZE) {
-            butterflies.splice(index, 1);
-            caughtButterfliesCount++;
-            updateCaughtButterfliesDisplay();
-            updateButterflyStatesCounts();
+            catchButterfly(butterfly, index);
         }
     });
 }
+
+
+
 
 // Initialize mouse tracking in a single place
 function initializeMouseTracking() {
@@ -209,10 +202,12 @@ function initializeMouseTracking() {
     mouseState.lastTime = Date.now();
 }
 
-function updateCaughtButterfliesDisplay() {
+export function updateCaughtButterfliesDisplay() {
   const displayElement = document.getElementById('caughtButterfliesCount');
   if (displayElement) {
     displayElement.textContent = `Butterflies Caught: ${caughtButterfliesCount}`;
+  } else {
+    console.error("Caught butterflies display element not found.");
   }
 }
 
@@ -242,7 +237,17 @@ function drawLineToTarget(ctx, butterfly) {
 function drawButterflyDebugInfo(ctx, butterfly) {
     const screenX = butterfly.x;
     const screenY = butterfly.y;
-    const distanceToCursor = Math.hypot(butterfly.x - mouseState.x, butterfly.y - mouseState.y);
+
+    // Get relative position of the butterfly
+    const relativePos = getRelativeButterflyPosition(butterfly, gardenCanvas);
+
+    // Calculate cursor position relative to the canvas
+    const { x: cursorX, y: cursorY } = calculateRelativePosition(mouseState.x, mouseState.y, gardenCanvas);
+
+    // Calculate distance to cursor
+    const dx = relativePos.x - cursorX;
+    const dy = relativePos.y - cursorY;
+    const distanceToCursor = Math.hypot(dx, dy);
 
     ctx.save();
     const lines = [];
@@ -275,6 +280,10 @@ function drawButterflyDebugInfo(ctx, butterfly) {
             lines.push(`Hover Time: ${remainingTime}s`);
         }
     }
+    if (document.getElementById('showScareTime').checked) {
+        const scareTimeLeft = Math.max(0, (butterfly_config.SCARED_DURATION - (Date.now() - butterfly.scaredStartTime)) / 1000).toFixed(1);
+        lines.push(`Scare Time Left: ${scareTimeLeft}s`);
+    }
 
     const lineHeight = 15;
     const padding = 10;
@@ -292,14 +301,12 @@ function drawButterflyDebugInfo(ctx, butterfly) {
 
     // Draw border
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-    ctx.beginPath();
-    ctx.roundRect(screenX + 20, screenY - 35, boxWidth, boxHeight, cornerRadius);
     ctx.stroke();
 
-    // Draw text with padding
+    // Draw text
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     lines.forEach((line, index) => {
-        ctx.fillText(line, screenX + 20 + padding, screenY - 35 + padding + (lineHeight * index));
+        ctx.fillText(line, screenX + 20 + padding, screenY - 35 + padding + (index * lineHeight));
     });
 
     ctx.restore();
@@ -308,28 +315,9 @@ function drawButterflyDebugInfo(ctx, butterfly) {
 function drawCursorInfo(ctx) {
     // Draw mouse coordinates using mouseState
     const mouseText = `Mouse: (${Math.round(mouseState.x)}, ${Math.round(mouseState.y)})`;
-    ctx.font = '12px monospace';
-    const textWidth = ctx.measureText(mouseText).width;
-    const padding = 10;
-    const boxWidth = textWidth + (padding * 2);
-    const boxHeight = 20;
-    const cornerRadius = 8;
 
-    // Draw background
-    ctx.fillStyle = color_config.DEBUG.BOX_BG;
-    ctx.beginPath();
-    ctx.roundRect(mouseState.x + 20, mouseState.y - 25, boxWidth, boxHeight, cornerRadius);
-    ctx.fill();
-
-    // Draw border
-    ctx.strokeStyle = color_config.DEBUG.BOX_BORDER;
-    ctx.beginPath();
-    ctx.roundRect(mouseState.x + 20, mouseState.y - 25, boxWidth, boxHeight, cornerRadius);
-    ctx.stroke();
-
-    // Draw text
-    ctx.fillStyle = color_config.DEBUG.MOUSE_COORDS;
-    ctx.fillText(mouseText, mouseState.x + 20 + padding, mouseState.y - 12);
+    // Use drawTextBox helper function
+    drawTextBox(ctx, mouseText, mouseState.x + 20, mouseState.y - 25, 10, 8, color_config.DEBUG.BOX_BG, color_config.DEBUG.BOX_BORDER, color_config.DEBUG.MOUSE_COORDS);
 }
 
 function handleTouchStart(event) {
@@ -373,9 +361,9 @@ function updateMousePosition(clientX, clientY, rect) {
     mouseState.lastX = mouseState.x;
     mouseState.lastY = mouseState.y;
     
-    // Calculate new position relative to canvas and add scroll offset
-    mouseState.x = clientX - rect.left + window.scrollX;
-    mouseState.y = clientY - rect.top + window.scrollY;
+    // Calculate new position relative to canvas
+    mouseState.x = clientX - rect.left;
+    mouseState.y = clientY - rect.top;
     
     // Calculate movement speed
     const dx = mouseState.x - mouseState.lastX;
@@ -466,3 +454,29 @@ if (showStatsCheckbox) {
         displayElement.style.display = showStatsCheckbox.checked ? 'block' : 'none';
     });
 }
+
+// Function to handle scroll updates
+function handleScrollUpdate() {
+    if (!gardenCanvas) return;
+
+    butterflies.forEach(butterfly => {
+        const relativePos = getRelativeButterflyPosition(butterfly, gardenCanvas);
+        setAbsoluteButterflyPosition(butterfly, relativePos.x, relativePos.y, gardenCanvas);
+    });
+
+    if (isDebugMode) {
+        console.log('Scroll update:', {
+            scrollX: window.scrollX,
+            scrollY: window.scrollY
+        });
+    }
+
+    // Update mouse position on scroll
+    const rect = gardenCanvas.getBoundingClientRect();
+    updateMousePosition(mouseState.x, mouseState.y, rect);
+}
+
+export function incrementCaughtButterfliesCount() {
+    caughtButterfliesCount++;
+    updateCaughtButterfliesDisplay();
+}   

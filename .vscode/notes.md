@@ -16,11 +16,25 @@
 
 - [x] Make the butterfly size oscillation bigger during flight, and smaller when hovering
 
-- [ ] Make me able to catch the butterfly with the mouse if i go fast enough with the mouse. 
+- [x] Make me able to catch the butterfly with the mouse if i go fast enough with the mouse. 
 
-- [ ] nice green background with light grass pokemon like ground texture.
+- [x] nice green background with light grass pokemon like ground texture.
 
 - [ ] Make it work on mobile.
+
+- [ ] clean config file.
+
+- [ ] split and reuse code
+
+- [ ] use linter
+
+- [ ] move all styles in css
+
+- [ ] clean css
+
+- [ ] Display background only if 5 butterfly caught
+
+- [ ] Make the caught butterflies fly to a butterfly-dex prison.
 
 - [ ] make better configuration, go through the code consider putting every i might want to configure in the config file.
 
@@ -28,24 +42,26 @@
 
 - [ ] add commit number somewhere
 
-- add link to github
+- [ ] change something based on the url (like the background)
 
-- add Click to email me around my picture
+- [ ] add link to github
 
-- every butterfly have now a name, and a lvl.
+- [ ] add Click to email me around my picture
 
-- when caught, show the butterfly flapping in a "caught" collection on top, and show its name and the lvl.
+- [ ] every butterfly have now a name, and a lvl.
 
-Word Effects: When a butterfly lands on a word, make the word gently glow or have small particles emanate from it.
+- [ ] when caught, show the butterfly flapping in a "caught" collection on top, and show its name and the lvl.
 
-4. Butterfly Interactions: Make butterflies slightly attract/repel each other when they get close.
+- [ ] Word Effects: When a butterfly lands on a word, make the word gently glow or have small particles emanate from it.
 
-Day/Night Cycle: Gradually change the background color and butterfly behavior based on the user's local time.
+- [ ] Butterfly Interactions: Make butterflies slightly attract/repel each other when they get close.
 
-Weather Effects: Add subtle rain or snow particles that butterflies try to avoid.
+- [ ] Day/Night Cycle: Gradually change the background color and butterfly behavior based on the user's local time.
 
-Butterfly Trail Effect: Add a subtle trail of small dots or sparkles behind each butterfly as it moves, fading out over time.
+- [ ] Weather Effects: Add subtle rain or snow particles that butterflies try to avoid.
 
-6. Sound Effects: Add subtle wing flap sounds when butterflies change direction dramatically or get scared.
+- [ ] Butterfly Trail Effect: Add a subtle trail of small dots or sparkles behind each butterfly as it moves, fading out over time.
 
-Mouse Trail: Add a gentle particle effect following the mouse that butterflies react to.
+- [ ] Sound Effects: Add subtle wing flap sounds when butterflies change direction dramatically or get scared.
+
+- [ ] Mouse Trail: Add a gentle particle effect following the mouse that butterflies react to.
