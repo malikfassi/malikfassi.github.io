@@ -135,6 +135,10 @@ function handleButterflyFlying(butterfly) {
         if (newTarget) {
             butterfly.targetElement = newTarget;
             newTarget.classList.add("targeted");
+        } else {
+            // If no target is found, assign a random position as a temporary target
+            butterfly.targetX = Math.random() * window.innerWidth;
+            butterfly.targetY = Math.random() * window.innerHeight;
         }
     }
 
@@ -159,7 +163,7 @@ function handleButterflyFlying(butterfly) {
             
             butterfly.hoveringPosition = {
                 x: randomX + window.scrollX,
-                y: randomY + window.scrollY
+                   y: randomY + window.scrollY
             };
         }
         
@@ -605,15 +609,6 @@ function colorWord(element, butterfly) {
     } else {
         element.style.color = '';
     }
-}
-
-export function catchButterfly(butterfly, index) {
-    console.log(`Caught butterfly at position: (${butterfly.x}, ${butterfly.y})`);
-    incrementCaughtButterfliesCount();
-    butterflies.splice(index, 1);
-    releaseTarget(butterfly);
-    // Create particles at the butterfly's position
-    createParticles(butterfly.x, butterfly.y);
 }
 
 function calculateScaredColor(butterfly) {

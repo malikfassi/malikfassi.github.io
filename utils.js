@@ -70,14 +70,6 @@ export function calculateDistance(x1, y1, x2, y2) {
     return Math.hypot(x2 - x1, y2 - y1);
 }
 
-export function updateMouseState(clientX, clientY, canvas) {
-    const { x, y } = calculateRelativePosition(clientX, clientY, canvas);
-    mouseState.lastX = mouseState.x;
-    mouseState.lastY = mouseState.y;
-    mouseState.x = x;
-    mouseState.y = y;
-}
-
 export function drawTextBox(ctx, text, x, y, padding, cornerRadius, bgColor, borderColor, textColor) {
     ctx.font = '12px monospace';
     const textWidth = ctx.measureText(text).width;

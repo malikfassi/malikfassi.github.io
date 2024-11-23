@@ -19,6 +19,7 @@ body {
     width: 100%;
     min-height: 100vh;
     position: relative;
+    cursor: url('fishing-net.png') 16 16, auto;
 }
 
 .background {
@@ -185,6 +186,7 @@ h2 {
     cursor: pointer;
     transition: transform 0.3s ease;
     object-fit: cover;
+    position: relative;
 }
 
 .contact-image:hover {
@@ -265,28 +267,162 @@ div[style*="position: fixed"] {
 #settingsButton {
     position: fixed;
     bottom: 10px;
-    left: 10px;
-    background: #333;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
+    right: 10px;
     cursor: pointer;
     z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-#settingsContainer {
-    display: none; /* Initially hidden */
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #6B5B95; /* Initial pastel color */
+}
+
+@keyframes colorChange1 {
+    0% { background-color: #FF6F61; }
+    33% { background-color: #6B5B95; }
+    66% { background-color: #88B04B; }
+    100% { background-color: #FF6F61; }
+}
+
+@keyframes colorChange2 {
+    0% { background-color: #6B5B95; }
+    33% { background-color: #88B04B; }
+    66% { background-color: #F7CAC9; }
+    100% { background-color: #6B5B95; }
+}
+
+@keyframes colorChange3 {
+    0% { background-color: #88B04B; }
+    33% { background-color: #F7CAC9; }
+    66% { background-color: #92A8D1; }
+    100% { background-color: #88B04B; }
+}
+
+#caughtButterfliesPrison {
+    display: none; /* Hide by default */
     position: fixed;
-    bottom: 50px; /* Position above the settings button */
+    top: 10px;
     left: 10px;
-    background: rgba(255, 255, 255, 0.9);
     padding: 10px;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 200px;
+    overflow-y: auto;
+    max-height: 100px;
     z-index: 1000;
-    width: 200px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+#caughtButterfliesPrison .butterfly {
+    background-color: #f5f6fa;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #333;
+    margin: 5px;
+}
+
+#caughtButterfliesPanel {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    gap: 5px;
+    color: #6B5B95; /* Pastel color for the butterfly icon */
+}
+
+.dot-matrix {
+    position: relative;
+    margin-top: 10px; /* Space below the name */
+    display: grid;
+    grid-template-columns: repeat(6, 5px); /* 6 dots per row */
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Ensure dots don't interfere with image interaction */
+}
+
+.dot-matrix .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    transition: none; /* No transition for caught butterfly dots */
+    animation: none; /* No animation for caught butterfly dots */
+}
+
+.butterfly-icon {
+    font-size: 2rem; /* Adjust size as needed */
+    color: #6B5B95; /* Pastel color */
+    font-family: 'Arial', sans-serif; /* Use a flat font */
+}
+
+/* Settings Dots */
+.settings-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #6B5B95; /* Initial pastel color */
+    transition: background-color 1s ease-in-out;
+    margin-right: 5px;
+    cursor: pointer; /* Ensure dots are clickable */
+}
+
+.settings-dot:nth-child(1) {
+    animation: colorChange1 3s infinite;
+}
+
+.settings-dot:nth-child(2) {
+    animation: colorChange2 3s infinite;
+}
+
+.settings-dot:nth-child(3) {
+    animation: colorChange3 3s infinite;
+}
+
+@keyframes colorChange1 {
+    0% { background-color: #FF6F61; }
+    33% { background-color: #6B5B95; }
+    66% { background-color: #88B04B; }
+    100% { background-color: #FF6F61; }
+}
+
+@keyframes colorChange2 {
+    0% { background-color: #6B5B95; }
+    33% { background-color: #88B04B; }
+    66% { background-color: #F7CAC9; }
+    100% { background-color: #6B5B95; }
+}
+
+@keyframes colorChange3 {
+    0% { background-color: #88B04B; }
+    33% { background-color: #F7CAC9; }
+    66% { background-color: #92A8D1; }
+    100% { background-color: #88B04B; }
+}
+
+.settings-container {
+    position: fixed;
+    bottom: 50px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.settings-content {
+    display: none; /* Initially hidden */
+    font-size: 0.8rem; /* Smaller font size for settings */
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer; /* Ensure the whole item is clickable */
 }
 

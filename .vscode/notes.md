@@ -32,7 +32,7 @@
 
 - [ ] clean css
 
-- [ ] Display background only if 5 butterfly caught
+- [x] Display background only if 5 butterfly caught
 
 - [ ] Make the caught butterflies fly to a butterfly-dex prison.
 

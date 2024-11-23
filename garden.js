@@ -6,11 +6,10 @@ import {
   scheduleNextSpawn,
   drawButterfly,
   getRelativeButterflyPosition,
-  catchButterfly,
   setAbsoluteButterflyPosition
 } from "./butterfly.js";
 import { isDebugMode, toggleDebug } from './config.js';
-import { updateParticles } from './particle.js';
+import { updateParticles, createParticles } from './particle.js';
 
 // Declare and initialize caughtButterfliesCount
 export let caughtButterfliesCount = 0;
@@ -44,7 +43,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }, INITIALIZATION_DELAY);
     
     window.addEventListener("scroll", handleScrollUpdate);
- });
+
+    document.getElementById('settingsButton').addEventListener('click', () => {
+        const settingsButton = document.getElementById('settingsButton');
+        const settingsContainer = document.getElementById('settingsContainer');
+        const settingsContent = document.getElementById('settingsContent');
+
+        settingsButton.addEventListener('click', () => {
+            const isExpanded = settingsContent.style.display === 'block';
+
+            if (isExpanded) {
+                // Collapse settings
+                settingsContent.style.display = 'none';
+                settingsContainer.style.display = 'none';
+            } else {
+                // Expand settings
+                settingsContent.style.display = 'block';
+                settingsContainer.style.display = 'flex';
+            }
+        });
+    });
+});
 
 // Single initialization function
 function initializeGardenElements() {
@@ -207,12 +226,6 @@ function initializeMouseTracking() {
 }
 
 export function updateCaughtButterfliesDisplay() {
-    const displayElement = document.getElementById('caughtButterfliesCount');
-    if (displayElement) {
-        displayElement.textContent = `Butterflies Caught: ${caughtButterfliesCount}`;
-    } else {
-        console.error("Caught butterflies display element not found.");
-    }
 
     // Gradually make the background visible when 5 butterflies are caught
     const backgroundElement = document.getElementById('background');
@@ -236,7 +249,8 @@ function drawDebugInfo(ctx) {
 
     // Draw lines to targets for each butterfly
     butterflies.forEach(butterfly => {
-        if (document.getElementById('showLineToTarget').checked) {  
+        const showLineToTargetCheckbox = document.getElementById('showLineToTarget');
+        if (showLineToTargetCheckbox && showLineToTargetCheckbox.checked) {  
             drawLineToTarget(ctx, butterfly);
         }
         drawButterflyDebugInfo(ctx, butterfly);
@@ -416,13 +430,6 @@ function updateMousePosition(clientX, clientY, rect) {
     }
 }
 
-// Keep only the ResizeObserver for dynamic content changes
-const observer = new ResizeObserver(() => {
-    handleCanvasResize();
-});
-observer.observe(document.body);
-
-
 function updateButterflyStatesCounts() {
     const stateCounts = {
         FLYING: 0,
@@ -442,28 +449,6 @@ function updateButterflyStatesCounts() {
         displayElement.textContent = `Total: ${totalButterflies} | FLYING: ${stateCounts.FLYING} | HOVERING: ${stateCounts.HOVERING} | LEAVING: ${stateCounts.LEAVING} | SCARED: ${stateCounts.SCARED}`;
         displayElement.style.display = showStatsCheckbox.checked ? 'block' : 'none';
     }
-}
-
-document.getElementById('settingsButton').addEventListener('click', () => {
-    // Toggle settings container visibility
-    const settingsContainer = document.getElementById('settingsContainer');
-    settingsContainer.style.display = settingsContainer.style.display === 'none' ? 'block' : 'none';
-});
-
-document.getElementById('settingsTitle').addEventListener('click', () => {
-    // Toggle settings content visibility
-    const settingsContent = document.getElementById('settingsContent');
-    settingsContent.style.display = settingsContent.style.display === 'none' ? 'block' : 'none';
-});
-
-const debugCheckbox = document.getElementById('debugMode');
-if (debugCheckbox) {
-    debugCheckbox.addEventListener('change', () => {
-        // Toggle debug mode
-        const debugEnabled = toggleDebug();
-        debugCheckbox.checked = debugEnabled;
-        console.log('Debug mode:', debugEnabled);
-    });
 }
 
 const showStatsCheckbox = document.getElementById('showStats');
@@ -498,5 +483,69 @@ function handleScrollUpdate() {
 
 export function incrementCaughtButterfliesCount() {
     caughtButterfliesCount++;
-    updateCaughtButterfliesDisplay();
-}   
+}
+
+// Show prison only during debug mode
+const debugCheckbox = document.getElementById('debugMode');
+if (debugCheckbox) {
+    debugCheckbox.addEventListener('change', () => {
+        const debugEnabled = toggleDebug();
+        debugCheckbox.checked = debugEnabled;
+        const prisonElement = document.getElementById('caughtButterfliesPrison');
+        prisonElement.style.display = debugEnabled ? 'flex' : 'none';
+    });
+}
+
+// Toggle debug mode and show stats
+document.getElementById('debugMode').addEventListener('click', () => {
+    const debugEnabled = toggleDebug();
+    const prisonElement = document.getElementById('caughtButterfliesPrison');
+    prisonElement.style.display = debugEnabled ? 'flex' : 'none';
+
+    // Show or hide debug options based on debug mode
+    const debugOptions = document.getElementById('debugOptions');
+    debugOptions.style.display = debugEnabled ? 'block' : 'none';
+});
+
+document.getElementById('showStats').addEventListener('click', () => {
+    const displayElement = document.getElementById('butterflyStatesCounts');
+    displayElement.style.display = displayElement.style.display === 'none' ? 'block' : 'none';
+});
+    
+// Define releaseTarget if needed
+function releaseTarget(butterfly) {
+    // Implement the logic for releasing the target
+    // Example: Resetting the target element or state
+    if (butterfly.targetElement) {
+        butterfly.targetElement.classList.remove("targeted");
+        butterfly.targetElement.style.color = '';
+        butterfly.targetElement = null;
+    }
+}
+
+// Ensure catchButterfly calls releaseTarget if it's defined
+export function catchButterfly(butterfly, index) {
+    console.log(`Caught butterfly at position: (${butterfly.x}, ${butterfly.y})`);
+    incrementCaughtButterfliesCount();
+    releaseTarget(butterfly);
+    
+    createParticles(butterfly.x, butterfly.y);
+
+    // Add caught butterfly to the dot matrix
+    const dotsContainer = document.getElementById('caughtButterfliesDots');
+    if (dotsContainer) {
+        const dotElement = document.createElement('div');
+        dotElement.className = 'dot';
+        dotElement.style.backgroundColor = butterfly.color; // Use the butterfly's color
+        dotsContainer.appendChild(dotElement);
+    }
+
+    // Remove the butterfly from the array
+    butterflies.splice(index, 1);
+
+    // display background
+    if (caughtButterfliesCount >= 5) {
+        document.getElementById('background').style.opacity = 100;
+    }
+}
+    

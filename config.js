@@ -48,11 +48,11 @@ export const wind_config = {
 
 export const butterfly_config = {
     FEAR_RADIUS: 100,
-    ESCAPE_SPEED: 40,
+    ESCAPE_SPEED: 20,
     PEACEFUL_SPEED: 5,
     MAX_SPEED: 7,
     MIN_SPEED: 3,
-    SCARED_DURATION: 2000,
+    SCARED_DURATION: 1000,
     STATES: {
         FLYING: 'FLYING',
         HOVERING: 'HOVERING',
@@ -97,13 +97,6 @@ export const butterfly_config = {
     WANDER_RADIUS: 15,
     FLASH_SPEED: 0.02,
     ANGER_TINT: 0.8
-};
-
-export const heatmap_config = {
-    CELL_SIZE: 2,
-    INFLUENCE_RADIUS: 10,
-    FADE_RATE: 0.98,
-    INTENSITY_MULTIPLIER: 20
 };
 
 export const disney_color_palette = [

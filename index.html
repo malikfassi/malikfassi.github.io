@@ -6,18 +6,21 @@
     <title>Malik FASSI FIHRI - Culinary Arts & Tech Professional</title>
     <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="background" id="background"></div>
     <canvas id="gardenCanvas" class="garden-canvas"></canvas>
     <div class="container">
-        <div class="profile-section text-center">
+        <div class="profile-section text-center" style="position: relative;">
             <img src="profile.jpeg" 
                  alt="Contact Me" 
                  class="contact-image" 
                  id="contactImage"
                  onclick="window.location.href='mailto:malikfassifihri@gmail.com'">
-            <h1><span class="important-word">MALIK FASSI FIHRI</span></h1>
+            <h1><span class="important-word">MALIK FASSI FIHRI</span>
+                <div id="caughtButterfliesDots" class="dot-matrix"></div>
+            </h1>
             <p class="title"><span class="important-word">CULINARY ARTS & TECH PROFESSIONAL</span></p>
         </div>
         <section class="section">
@@ -57,47 +60,28 @@
             <h3>Degree in <span class="important-word">Computer Science</span></h3>
             <p class="date"><span class="important-word">42 School, Paris</span> • <span class="important-word">2013 – 2017</span></p>
             <h3>Degree in <span class="important-word">Civil Engineering & Computer Science</span></h3>
-            <p class="date"><span class="important-word">Université libre de Bruxelles</span> • <span class="important-word">2011 – 2013</span></p>
+            <p class="date"><span class="important-word">Universit libre de Bruxelles</span> • <span class="important-word">2011 – 2013</span></p>
         </section>
-    </div>
-    <div style="position: fixed; top: 10px; left: 10px; z-index: 1000;">
-        <div id="caughtButterfliesCount" style="background: white; padding: 5px; border-radius: 5px;">
-            Butterflies Caught: 0
+        <div id="settingsButton" class="settings-icon">
+            <div class="settings-dot"></div>
         </div>
-    </div>
-
-    <div style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
-        <div id="butterflyStatesCounts" style="display: none; background: white; padding: 5px; border-radius: 5px; margin-top: 10px;">
-            <!-- Stats will be dynamically updated here -->
-        </div>
-        <div id="settingsButton" style="background: #333; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
-            Settings
-        </div>
-        <div id="settingsContainer" style="display: none; background: rgba(255, 255, 255, 0.9); padding: 10px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin-top: 10px;">
-            <div id="toggleDebugSection">
-                <label><input type="checkbox" id="debugMode"> Toggle Debug Mode</label>
-            </div>
-            <div id="showStatsSection">
-                <label><input type="checkbox" id="showStats"> Show Stats</label>
-            </div>
-            <div id="configureDebugSection">
-                <div id="settingsTitle" style="cursor: pointer; font-weight: bold;">Configure Debug Mode</div>
-                <div id="settingsContent" style="display: none; margin-top: 10px;">
-                    <label><input type="checkbox" id="showState"> Show State</label><br>
-                    <label><input type="checkbox" id="showWordsHovered"> Show Words Hovered</label><br>
-                    <label><input type="checkbox" id="showTargetWord"> Show Target Word</label><br>
-                    <label><input type="checkbox" id="showTargetPos"> Show Target Position</label><br>
-                    <label><input type="checkbox" id="showButterflyPos"> Show Butterfly Position</label><br>
-                    <label><input type="checkbox" id="showDistanceToCursor"> Show Distance to Cursor</label><br>
-                    <label><input type="checkbox" id="showVelocity"> Show Velocity</label><br>
-                    <label><input type="checkbox" id="showHoveringDuration"> Show Hovering Duration</label>
-                    <label><input type="checkbox" id="showLineToTarget"> Show Line to Target</label>
-                    <label><input type="checkbox" id="showScareTime"> Show Scare Time</label>
+        <div id="settingsContainer" class="settings-container" style="display: none;">
+            <div id="settingsContent" class="settings-content">
+                <div class="setting-item">
+                    <div class="settings-dot" id="debugMode-dot"></div>
+                    <label for="debugMode">Debug Mode</label>
+                    <input type="checkbox" id="debugMode" style="display: none;">
                 </div>
-            </div>
-            <div id="configureGameSection">
-                <div style="font-weight: bold;">Configure Game</div>
-                <!-- Add game configuration options here -->
+                <div class="setting-item">
+                    <div class="settings-dot" id="showStats-dot"></div>
+                    <label for="showStats">Show Stats</label>
+                    <input type="checkbox" id="showStats" style="display: none;">
+                </div>
+                <div class="setting-item">
+                    <div class="settings-dot" id="showLineToTarget-dot"></div>
+                    <label for="showLineToTarget">Show Line to Target</label>
+                    <input type="checkbox" id="showLineToTarget" style="display: none;">
+                </div>
             </div>
         </div>
     </div>
