@@ -1,8 +1,30 @@
-export let isDebugMode = false;
-export function toggleDebug() {
-    isDebugMode = !isDebugMode;
-    document.body.classList.toggle('debug-mode', isDebugMode);
-    return isDebugMode;
+export const settings = {
+    isShowStats: false,
+    isShowLineToTarget: true,
+    isShowState: true,
+    isShowWordsHovered: false,
+    isShowTargetWord: false,
+    isShowTargetPos: false,
+    isShowButterflyPos: false,
+    isShowDistanceToCursor: false,
+    isShowVelocity: true,
+    isShowHoveringDuration: false,
+    isShowScareTime: false
+};
+
+export function updateDebugMode() {
+    settings.isDebugMode = Object.values(settings).some(value => value);
+    document.body.classList.toggle('debug-mode', settings.isDebugMode);
+}
+
+export function toggleSetting(settingKey) {
+    if (settings.hasOwnProperty(settingKey)) {
+        settings[settingKey] = !settings[settingKey];
+        document.body.classList.toggle(settingKey, settings[settingKey]);
+        updateDebugMode();
+        return settings[settingKey];
+    }
+    return null;
 }
 
 export const color_config = {

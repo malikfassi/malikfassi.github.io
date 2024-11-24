@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malik FASSI FIHRI - Culinary Arts & Tech Professional</title>
+    <title>Malik FASSI - Culinary Arts & Tech Professional</title>
     <link href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -11,6 +11,7 @@
 <body>
     <div class="background" id="background"></div>
     <canvas id="gardenCanvas" class="garden-canvas"></canvas>
+    <div id="butterflyStatesCounts" style="display: none;"></div>
     <div class="container">
         <div class="profile-section text-center" style="position: relative;">
             <img src="profile.jpeg" 
@@ -18,9 +19,8 @@
                  class="contact-image" 
                  id="contactImage"
                  onclick="window.location.href='mailto:malikfassifihri@gmail.com'">
-            <h1><span class="important-word">MALIK FASSI FIHRI</span>
-                <div id="caughtButterfliesDots" class="dot-matrix"></div>
-            </h1>
+            <h1 style="text-align: center;"><span class="important-word">MALIK FASSI FIHRI</span></h1>
+            <div id="caughtButterfliesDots" class="dot-matrix"></div>
             <p class="title"><span class="important-word">CULINARY ARTS & TECH PROFESSIONAL</span></p>
         </div>
         <section class="section">
@@ -66,23 +66,7 @@
             <div class="settings-dot"></div>
         </div>
         <div id="settingsContainer" class="settings-container" style="display: none;">
-            <div id="settingsContent" class="settings-content">
-                <div class="setting-item">
-                    <div class="settings-dot" id="debugMode-dot"></div>
-                    <label for="debugMode">Debug Mode</label>
-                    <input type="checkbox" id="debugMode" style="display: none;">
-                </div>
-                <div class="setting-item">
-                    <div class="settings-dot" id="showStats-dot"></div>
-                    <label for="showStats">Show Stats</label>
-                    <input type="checkbox" id="showStats" style="display: none;">
-                </div>
-                <div class="setting-item">
-                    <div class="settings-dot" id="showLineToTarget-dot"></div>
-                    <label for="showLineToTarget">Show Line to Target</label>
-                    <input type="checkbox" id="showLineToTarget" style="display: none;">
-                </div>
-            </div>
+            <div id="settingsContent" class="settings-content"></div>
         </div>
     </div>
     <script type="module" src="config.js"></script>

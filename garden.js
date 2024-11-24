@@ -8,7 +8,7 @@ import {
   getRelativeButterflyPosition,
   setAbsoluteButterflyPosition
 } from "./butterfly.js";
-import { isDebugMode, toggleDebug } from './config.js';
+import { settings, toggleSetting } from './config.js';
 import { updateParticles, createParticles } from './particle.js';
 
 // Declare and initialize caughtButterfliesCount
@@ -44,25 +44,55 @@ document.addEventListener("DOMContentLoaded", () => {
     
     window.addEventListener("scroll", handleScrollUpdate);
 
-    document.getElementById('settingsButton').addEventListener('click', () => {
-        const settingsButton = document.getElementById('settingsButton');
-        const settingsContainer = document.getElementById('settingsContainer');
-        const settingsContent = document.getElementById('settingsContent');
+    const settingsButton = document.getElementById('settingsButton');
+    const settingsContainer = document.getElementById('settingsContainer');
+    const settingsContent = document.getElementById('settingsContent');
 
+    if (settingsButton) {
         settingsButton.addEventListener('click', () => {
             const isExpanded = settingsContent.style.display === 'block';
 
             if (isExpanded) {
-                // Collapse settings
                 settingsContent.style.display = 'none';
                 settingsContainer.style.display = 'none';
+                settingsButton.innerHTML = `<div class="settings-dot"></div>`;
             } else {
-                // Expand settings
                 settingsContent.style.display = 'block';
                 settingsContainer.style.display = 'flex';
+
+                // Clear existing content
+                settingsContent.innerHTML = '';
+
+                // Dynamically create settings items
+                Object.keys(settings).forEach(settingKey => {
+                    const settingItem = document.createElement('div');
+                    settingItem.className = 'setting-item';
+                    settingItem.id = `${settingKey}-item`;
+
+                    const label = document.createElement('label');
+                    label.setAttribute('for', settingKey);
+
+                    const formattedLabel = settingKey.replace(/^is/, '').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    label.textContent = formattedLabel;
+
+                    const settingsDot = document.createElement('div');
+                    settingsDot.className = 'settings-dot';
+                    settingsDot.id = `${settingKey}-dot`;
+
+                    settingItem.appendChild(label);
+                    settingItem.appendChild(settingsDot);
+                    settingsContent.appendChild(settingItem);
+
+                    // Add event listener to toggle setting
+                    settingItem.addEventListener('click', () => {
+                        const isActive = toggleSetting(settingKey);
+                        settingsDot.classList.toggle('checked', isActive);
+                        label.parentElement.classList.toggle('active', isActive);
+                    });
+                });
             }
         });
-    });
+    }
 });
 
 // Single initialization function
@@ -70,7 +100,6 @@ function initializeGardenElements() {
     setupCanvas();
     handleCanvasResize();
     initializeMouseTracking();
-    setupDebugToggle();
 }
 
 function setupCanvas() {
@@ -83,17 +112,6 @@ function setupCanvas() {
         document.body.appendChild(gardenCanvas);
     }
     ctx = gardenCanvas.getContext("2d");
-}
-
-function setupDebugToggle() {
-    const debugToggle = document.getElementById('debugToggle');
-    if (debugToggle) {
-        debugToggle.addEventListener('click', () => {
-            const debugEnabled = toggleDebug();
-            debugToggle.style.background = debugEnabled ? '#ff4444' : '#333';
-            console.log('Debug mode:', debugEnabled);
-        });
-    }
 }
 
 function handleCanvasResize() {
@@ -175,7 +193,7 @@ function animateGarden() {
     // Update the butterfly states count display
     updateButterflyStatesCounts();
 
-    if (isDebugMode) {
+    if (settings.isDebugMode) {
         drawDebugInfo(ctx);
         drawCursorInfo(ctx);
     }
@@ -211,7 +229,7 @@ function handleInteraction(x, y) {
 function initializeMouseTracking() {
     if (!gardenCanvas) return;
     
-    console.log('initializeMouseTracking isDebugMode', isDebugMode);
+    console.log('initializeMouseTracking isDebugMode', settings.isDebugMode);
     console.log('Attaching mousemove event listener to canvas:', gardenCanvas);
 
     // Add mouse and touch listeners with passive option
@@ -245,12 +263,11 @@ export function updateCaughtButterfliesDisplay() {
 }
 
 function drawDebugInfo(ctx) {
-    if (!isDebugMode) return;
+    if (!settings.isDebugMode) return;
 
     // Draw lines to targets for each butterfly
     butterflies.forEach(butterfly => {
-        const showLineToTargetCheckbox = document.getElementById('showLineToTarget');
-        if (showLineToTargetCheckbox && showLineToTargetCheckbox.checked) {  
+        if (settings.isShowLineToTarget) {  
             drawLineToTarget(ctx, butterfly);
         }
         drawButterflyDebugInfo(ctx, butterfly);
@@ -286,35 +303,35 @@ function drawButterflyDebugInfo(ctx, butterfly) {
     ctx.save();
     const lines = [];
 
-    if (document.getElementById('showState').checked) {
+    if (settings.isShowState) {
         lines.push(`State: ${butterfly.state}`);
     }
-    if (document.getElementById('showWordsHovered').checked) {
+    if (settings.isShowWordsHovered) {
         lines.push(`Words Hovered: ${butterfly.wordsHovered || 0}`);
     }
-    if (document.getElementById('showTargetWord').checked) {
+    if (settings.isShowTargetWord) {
         lines.push(`Target word: ${butterfly.targetElement?.textContent}`);
     }
-    if (document.getElementById('showTargetPos').checked) {
+    if (settings.isShowTargetWord) {
         lines.push(`Target Pos: (${Math.round(butterfly.targetX)}, ${Math.round(butterfly.targetY)})`);
     }
-    if (document.getElementById('showButterflyPos').checked) {
+    if (settings.isShowButterflyPos) {
         lines.push(`Butterfly Pos: (${Math.round(screenX)}, ${Math.round(screenY)})`);
     }
-    if (document.getElementById('showDistanceToCursor').checked) {
+    if (settings.isShowDistanceToCursor) {
         lines.push(`Distance to Cursor: ${Math.round(distanceToCursor)}`);
     }
-    if (document.getElementById('showVelocity').checked) {
+    if (settings.isShowVelocity) {
         lines.push(`Velocity: ${butterfly.velocity.x.toFixed(3)}, ${butterfly.velocity.y.toFixed(3)}`);
     }
-    if (document.getElementById('showHoveringDuration').checked) {
+    if (settings.isShowHoveringDuration) {
         if (butterfly.state === butterfly_config.STATES.HOVERING && butterfly.hoveringStartTime) {
             const hoverTime = Date.now() - butterfly.hoveringStartTime;
             const remainingTime = Math.max(0, (butterfly.currentHoverDuration - hoverTime) / 1000).toFixed(1);
             lines.push(`Hover Time: ${remainingTime}s`);
         }
     }
-    if (document.getElementById('showScareTime').checked) {
+    if (settings.isShowScareTime) {
         const scareTimeLeft = Math.max(0, (butterfly_config.SCARED_DURATION - (Date.now() - butterfly.scaredStartTime)) / 1000).toFixed(1);
         lines.push(`Scare Time Left: ${scareTimeLeft}s`);
     }
@@ -347,6 +364,8 @@ function drawButterflyDebugInfo(ctx, butterfly) {
 }
 
 function drawCursorInfo(ctx) {
+    if (!settings.showCursorCoord) return; // Check the new setting
+
     // Draw mouse coordinates using mouseState
     const mouseText = `Mouse: (${Math.round(mouseState.x)}, ${Math.round(mouseState.y)})`;
 
@@ -410,7 +429,7 @@ function updateMousePosition(clientX, clientY, rect) {
     mouseState.isMoving = mouseState.speed > 0.1;
     
     // Debug logging
-    if (isDebugMode) {
+    if (settings.isDebugMode) {
         console.log('Mouse position updated:', {
             clientX,
             clientY,
@@ -431,6 +450,7 @@ function updateMousePosition(clientX, clientY, rect) {
 }
 
 function updateButterflyStatesCounts() {
+    if (!settings.isShowStats) return;
     const stateCounts = {
         FLYING: 0,
         HOVERING: 0,
@@ -447,17 +467,8 @@ function updateButterflyStatesCounts() {
     const displayElement = document.getElementById('butterflyStatesCounts');
     if (displayElement) {
         displayElement.textContent = `Total: ${totalButterflies} | FLYING: ${stateCounts.FLYING} | HOVERING: ${stateCounts.HOVERING} | LEAVING: ${stateCounts.LEAVING} | SCARED: ${stateCounts.SCARED}`;
-        displayElement.style.display = showStatsCheckbox.checked ? 'block' : 'none';
+        displayElement.style.display = settings.isShowStats ? 'block' : 'none';
     }
-}
-
-const showStatsCheckbox = document.getElementById('showStats');
-if (showStatsCheckbox) {
-    showStatsCheckbox.addEventListener('change', () => {
-        //toggle stats display
-        const displayElement = document.getElementById('butterflyStatesCounts');
-        displayElement.style.display = showStatsCheckbox.checked ? 'block' : 'none';
-    });
 }
 
 // Function to handle scroll updates
@@ -469,7 +480,7 @@ function handleScrollUpdate() {
         setAbsoluteButterflyPosition(butterfly, relativePos.x, relativePos.y, gardenCanvas);
     });
 
-    if (isDebugMode) {
+    if (settings.isDebugMode) {
         console.log('Scroll update:', {
             scrollX: window.scrollX,
             scrollY: window.scrollY
@@ -484,33 +495,6 @@ function handleScrollUpdate() {
 export function incrementCaughtButterfliesCount() {
     caughtButterfliesCount++;
 }
-
-// Show prison only during debug mode
-const debugCheckbox = document.getElementById('debugMode');
-if (debugCheckbox) {
-    debugCheckbox.addEventListener('change', () => {
-        const debugEnabled = toggleDebug();
-        debugCheckbox.checked = debugEnabled;
-        const prisonElement = document.getElementById('caughtButterfliesPrison');
-        prisonElement.style.display = debugEnabled ? 'flex' : 'none';
-    });
-}
-
-// Toggle debug mode and show stats
-document.getElementById('debugMode').addEventListener('click', () => {
-    const debugEnabled = toggleDebug();
-    const prisonElement = document.getElementById('caughtButterfliesPrison');
-    prisonElement.style.display = debugEnabled ? 'flex' : 'none';
-
-    // Show or hide debug options based on debug mode
-    const debugOptions = document.getElementById('debugOptions');
-    debugOptions.style.display = debugEnabled ? 'block' : 'none';
-});
-
-document.getElementById('showStats').addEventListener('click', () => {
-    const displayElement = document.getElementById('butterflyStatesCounts');
-    displayElement.style.display = displayElement.style.display === 'none' ? 'block' : 'none';
-});
     
 // Define releaseTarget if needed
 function releaseTarget(butterfly) {

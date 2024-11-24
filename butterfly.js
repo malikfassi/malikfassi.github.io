@@ -1,7 +1,6 @@
 import { color_config, butterfly_config } from "./config.js";
-import { gardenCanvas, mouseState, incrementCaughtButterfliesCount } from "./garden.js";
+import { gardenCanvas, mouseState } from "./garden.js";
 import { getElementPagePosition } from './utils.js';
-import { createParticles } from './particle.js';
 
 export let butterflies = [];
 
@@ -34,7 +33,7 @@ export function updateButterfly(butterfly) {
     } else {
         // If scared, check if it's time to transition back
         if (Date.now() - butterfly.scaredStartTime > butterfly_config.SCARED_DURATION) {
-            butterfly.state = butterfly_config.STATES.FLYING;
+            butterfly.state = butterfly.previousState || butterfly_config.STATES.FLYING;
             butterfly.scaredStartTime = null;
         }
     }
@@ -136,7 +135,6 @@ function handleButterflyFlying(butterfly) {
             butterfly.targetElement = newTarget;
             newTarget.classList.add("targeted");
         } else {
-            // If no target is found, assign a random position as a temporary target
             butterfly.targetX = Math.random() * window.innerWidth;
             butterfly.targetY = Math.random() * window.innerHeight;
         }
@@ -144,42 +142,32 @@ function handleButterflyFlying(butterfly) {
 
     if (butterfly.targetElement) {
         const rect = butterfly.targetElement.getBoundingClientRect();
-        
-        // Get target position first
         const targetPos = getElementPagePosition(butterfly.targetElement, gardenCanvas);
         
-        butterfly.targetX = targetPos.x
-        butterfly.targetY = targetPos.y
-        // Calculate distance to target
+        butterfly.targetX = targetPos.x;
+        butterfly.targetY = targetPos.y;
         const dx = targetPos.x - butterfly.x;
         const dy = targetPos.y - butterfly.y;
         const distance = Math.hypot(dx, dy);
         
-        // Now we can check distance and set hover position if needed
         if (!butterfly.hoveringPosition && distance < butterfly_config.HOVER_THRESHOLD) {
-            // Random position within the word boundaries
             const randomX = rect.left + (Math.random() * rect.width);
             const randomY = rect.top + (Math.random() * rect.height);
             
             butterfly.hoveringPosition = {
                 x: randomX + window.scrollX,
-                   y: randomY + window.scrollY
+                y: randomY + window.scrollY
             };
         }
         
-        // Get final target position (either random hover position or word position)
-        const finalTargetPos = butterfly.hoveringPosition || targetPos;
-        
-        // Move towards target
-        butterflyMoveTo(butterfly, finalTargetPos.x, finalTargetPos.y);
-
-        // Check if close enough to start hovering
-        if (distance < butterfly_config.HOVER_THRESHOLD) {
-            butterfly.state = butterfly_config.STATES.HOVERING;
-            butterfly.hoveringStartTime = Date.now();
-            butterfly.currentHoverDuration = 
-                butterfly_config.HOVER.MIN_DURATION + 
-                Math.random() * (butterfly_config.HOVER.MAX_DURATION - butterfly_config.HOVER.MIN_DURATION);
+        if (distance > 0) {
+            const speed = butterfly_config.FLYING_SPEED;
+            const smoothingFactor = 0.1; // Adjust for smoother transitions
+            butterfly.velocity.x += ((dx / distance) * speed - butterfly.velocity.x) * smoothingFactor;
+            butterfly.velocity.y += ((dy / distance) * speed - butterfly.velocity.y) * smoothingFactor;
+        } else {
+            butterfly.velocity.x = (Math.random() - 0.5) * 0.1;
+            butterfly.velocity.y = (Math.random() - 0.5) * 0.1;
         }
     }
 }
