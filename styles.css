@@ -72,7 +72,9 @@ h2 {
 }
 
 .profile-section {
-    margin-bottom: var(--spacing-unit);
+    position: relative;
+    text-align: center; /* Center the content */
+    margin-bottom: 2rem;
 }
 
 .title {
@@ -211,6 +213,7 @@ h2 {
     max-width: 800px;     /* Limit content width for better readability */
     margin-left: auto;
     margin-right: auto;
+    text-align: justify;
 }
 
 /* Adjust spacing between sections */
@@ -239,8 +242,10 @@ h2 {
 }
 
 #butterflyStatesCounts, #caughtButterfliesCount {
+    position: fixed;
     background: white;
     padding: 5px;
+    z-index: 1000;
     border-radius: 5px;
     order: 1; /* Set order to place them above the debug options */
 }
@@ -337,13 +342,11 @@ div[style*="position: fixed"] {
 }
 
 .dot-matrix {
-    position: relative;
-    margin-top: 10px; /* Space below the name */
-    display: grid;
-    grid-template-columns: repeat(6, 5px); /* 6 dots per row */
-    gap: 2px;
+    display: inline-flex; /* Display dots inline */
     justify-content: center;
     align-items: center;
+    gap: 2px;
+    margin-top: 10px; /* Space below the name */
     pointer-events: none; /* Ensure dots don't interfere with image interaction */
 }
 
@@ -367,9 +370,17 @@ div[style*="position: fixed"] {
     height: 10px;
     border-radius: 50%;
     background-color: #6B5B95; /* Initial pastel color */
-    transition: background-color 1s ease-in-out;
+    transition: transform 0.3s, background-color 0.3s;
     margin-right: 5px;
     cursor: pointer; /* Ensure dots are clickable */
+}
+
+.settings-dot.checked {
+    border: 2px solid #6B5B95; /* Outline for checked state */
+}
+
+.setting-item.active label {
+    font-weight: bold; /* Bold label when active */
 }
 
 .settings-dot:nth-child(1) {
@@ -412,6 +423,7 @@ div[style*="position: fixed"] {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    z-index: 1000;
 }
 
 .settings-content {
@@ -421,8 +433,8 @@ div[style*="position: fixed"] {
 
 .setting-item {
     display: flex;
+    justify-content: flex-end; /* Align items to the right */
     align-items: center;
     gap: 5px;
     cursor: pointer; /* Ensure the whole item is clickable */
 }
-
